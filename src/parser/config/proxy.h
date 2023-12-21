@@ -78,6 +78,8 @@ struct Proxy {
     uint16_t AlterId = 0;
     String TransferProtocol;
     String FakeType;
+    String AuthStr;
+
     bool TLSSecure = false;
 
     String Host;

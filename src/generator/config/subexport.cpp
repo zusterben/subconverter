@@ -2112,6 +2112,15 @@ static rapidjson::Value stringArrayToJsonArray(const std::string &array, const s
     return result;
 }
 
+bool isNumeric(const std::string &str) {
+    for (char c: str) {
+        if (!std::isdigit(static_cast<unsigned char>(c))) {
+            return false;
+        }
+    }
+    return true;
+}
+
 void
 proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector<RulesetContent> &ruleset_content_array,
                const ProxyGroupConfigs &extra_proxy_group, extra_settings &ext) {
@@ -2120,6 +2129,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
     rapidjson::Value outbounds(rapidjson::kArrayType), route(rapidjson::kArrayType);
     std::vector<Proxy> nodelist;
     string_array remarks_list;
+    std::string search = " Mbps";
 
     if (!ext.nodelist) {
         auto direct = buildObject(allocator, "type", "direct", "tag", "DIRECT");
@@ -2241,13 +2251,15 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
             case ProxyType::WireGuard: {
                 proxy.AddMember("type", "wireguard", allocator);
                 proxy.AddMember("tag", rapidjson::StringRef(x.Remark.c_str()), allocator);
+                proxy.AddMember("inet4_bind_address", rapidjson::StringRef(x.SelfIP.c_str()), allocator);
                 rapidjson::Value addresses(rapidjson::kArrayType);
-                addresses.PushBack(rapidjson::StringRef(x.SelfIP.c_str()), allocator);
-                if (!x.SelfIPv6.empty())
-                    addresses.PushBack(rapidjson::StringRef(x.SelfIPv6.c_str()), allocator);
+                addresses.PushBack(rapidjson::StringRef(x.SelfIP.append("/32").c_str()), allocator);
+//                if (!x.SelfIPv6.empty())
+//                    addresses.PushBack(rapidjson::StringRef(x.SelfIPv6.c_str()), allocator);
                 proxy.AddMember("local_address", addresses, allocator);
+                if (!x.SelfIPv6.empty())
+                    proxy.AddMember("inet6_bind_address", rapidjson::StringRef(x.SelfIPv6.c_str()), allocator);
                 proxy.AddMember("private_key", rapidjson::StringRef(x.PrivateKey.c_str()), allocator);
-
                 rapidjson::Value peer(rapidjson::kObjectType);
                 peer.AddMember("server", rapidjson::StringRef(x.Hostname.c_str()), allocator);
                 peer.AddMember("server_port", x.Port, allocator);
@@ -2288,18 +2300,41 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
             case ProxyType::Hysteria: {
                 addSingBoxCommonMembers(proxy, x, "hysteria", allocator);
                 proxy.AddMember("auth_str", rapidjson::StringRef(x.Auth.c_str()), allocator);
-                proxy.AddMember("up", rapidjson::StringRef(x.UpMbps.c_str()), allocator);
-                proxy.AddMember("down", rapidjson::StringRef(x.DownMbps.c_str()), allocator);
-                rapidjson::Value tls(rapidjson::kObjectType);
-                tls.AddMember("enabled", true, allocator);
-                proxy.AddMember("tls", tls, allocator);
-                if (!tfo.is_undef())
-                    proxy.AddMember("tcp_fast_open", tfo.get(), allocator);
+                if (isNumeric(x.UpMbps)) {
+                    proxy.AddMember("up_mbps", std::stoi(x.UpMbps), allocator);
+//                    x.UpMbps.append(search);
+//                    proxy.AddMember("up", rapidjson::StringRef(x.UpMbps.c_str()), allocator);
+                } else {
+//                    proxy.AddMember("up", rapidjson::StringRef(x.UpMbps.c_str()), allocator);
+                    size_t pos = x.UpMbps.find(search);
+                    if (pos != std::string::npos) {
+                        x.UpMbps.replace(pos, search.length(), "");
+                    }
+                    proxy.AddMember("up_mbps", std::stoi(x.UpMbps), allocator);
+                }
+                if (isNumeric(x.DownMbps)) {
+                    proxy.AddMember("down_mbps", std::stoi(x.DownMbps), allocator);
+//                    x.DownMbps.append(search);
+//                    proxy.AddMember("down", rapidjson::StringRef(x.DownMbps.c_str()), allocator);
+                } else {
+//                    proxy.AddMember("down", rapidjson::StringRef(x.DownMbps.c_str()), allocator);
+                    size_t pos = x.DownMbps.find(search);
+                    if (pos != std::string::npos) {
+                        x.DownMbps.replace(pos, search.length(), "");
+                    }
+                    proxy.AddMember("down_mbps", std::stoi(x.DownMbps), allocator);
+                }
+                if (!x.TLSSecure) {
+                    rapidjson::Value tls(rapidjson::kObjectType);
+                    tls.AddMember("enabled", true, allocator);
+                    if (!x.Alpn.empty()) {
+                        auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
+                        tls.AddMember("alpn", alpns, allocator);
+                    }
+                    proxy.AddMember("tls", tls, allocator);
+                }
                 if (!x.FakeType.empty())
                     proxy.AddMember("network", rapidjson::StringRef(x.FakeType.c_str()), allocator);
-                if (!x.Alpn.empty())
-                    proxy.AddMember("tls", rapidjson::StringRef(
-                            std::string(R"({ "enabled": true,"alpn": [)" + x.Alpn + "],}").c_str()), allocator);
                 if (!x.OBFSParam.empty())
                     proxy.AddMember("obfs", rapidjson::StringRef(x.OBFSParam.c_str()), allocator);
                 break;
@@ -2307,19 +2342,33 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
             case ProxyType::Hysteria2: {
                 addSingBoxCommonMembers(proxy, x, "hysteria2", allocator);
                 proxy.AddMember("password", rapidjson::StringRef(x.Password.c_str()), allocator);
-                if(!x.TLSSecure) {
+                if (!x.TLSSecure) {
                     rapidjson::Value tls(rapidjson::kObjectType);
                     tls.AddMember("enabled", true, allocator);
-                    if (!x.Alpn.empty()){
-                        auto  alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
+                    if (!x.Alpn.empty()) {
+                        auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
                         tls.AddMember("alpn", alpns, allocator);
                     }
                     proxy.AddMember("tls", tls, allocator);
                 }
-                if (!x.UpMbps.empty())
-                    proxy.AddMember("up_mbps", rapidjson::StringRef(x.UpMbps.c_str()), allocator);
-                if (!x.DownMbps.empty())
-                    proxy.AddMember("down_mbps", rapidjson::StringRef(x.DownMbps.c_str()), allocator);
+                if (!x.UpMbps.empty()) {
+                    if (!isNumeric(x.UpMbps)) {
+                        size_t pos = x.UpMbps.find(search);
+                        if (pos != std::string::npos) {
+                            x.UpMbps.replace(pos, search.length(), "");
+                        }
+                    }
+                    proxy.AddMember("up_mbps", std::stoi(x.UpMbps), allocator);
+                }
+                if (!x.DownMbps.empty()) {
+                    if (!isNumeric(x.DownMbps)) {
+                        size_t pos = x.DownMbps.find(search);
+                        if (pos != std::string::npos) {
+                            x.DownMbps.replace(pos, search.length(), "");
+                        }
+                    }
+                    proxy.AddMember("down_mbps", std::stoi(x.DownMbps), allocator);
+                }
                 if (!x.OBFSParam.empty()) {
                     if (!x.OBFSPassword.empty()) {
                         proxy.AddMember("obfs", rapidjson::StringRef(std::string(
@@ -2341,8 +2390,8 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
             tls.AddMember("enabled", true, allocator);
             if (!x.ServerName.empty())
                 tls.AddMember("server_name", rapidjson::StringRef(x.ServerName.c_str()), allocator);
-            if (!x.Alpn.empty()){
-                auto  alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
+            if (!x.Alpn.empty()) {
+                auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
                 tls.AddMember("alpn", alpns, allocator);
             }
             tls.AddMember("insecure", buildBooleanValue(scv), allocator);
@@ -2361,7 +2410,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                     if (!x.PublicKey.empty()) {
                         reality.AddMember("public_key", rapidjson::StringRef(x.PublicKey.c_str()), allocator);
                     }
-                    auto   shortIds= stringArrayToJsonArray(x.Alpn, ",", allocator);
+                    auto shortIds = stringArrayToJsonArray(x.Alpn, ",", allocator);
                     reality.AddMember("short_id", shortIds, allocator);
                     tls.AddMember("reality", reality, allocator);
                 }
