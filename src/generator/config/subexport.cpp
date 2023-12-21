@@ -2349,6 +2349,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                         auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
                         tls.AddMember("alpn", alpns, allocator);
                     }
+                    tls.AddMember("insecure", buildBooleanValue(scv), allocator);
                     proxy.AddMember("tls", tls, allocator);
                 }
                 if (!x.UpMbps.empty()) {
