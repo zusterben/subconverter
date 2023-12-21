@@ -2,7 +2,7 @@
 
 Utility to convert between various proxy subscription formats.
 
-[![Build Status](https://github.com/asdlokj1qpi23/subconverter/actions/workflows/build.yml/badge.svg)](https://github.com/tindy2013/subconverter/actions)
+[![Build Status](https://github.com/asdlokj1qpi23/subconverter/actions/workflows/build.yml/badge.svg)](https://github.com/asdlokj1qpi23/subconverter/actions)
 [![GitHub tag (latest SemVer)](https://img.shields.io/github/tag/asdlokj1qpi23/subconverter.svg)](https://github.com/asdlokj1qpi23/subconverter/tags)
 [![GitHub release](https://img.shields.io/github/release/asdlokj1qpi23/subconverter.svg)](https://github.com/asdlokj1qpi23/subconverter/releases)
 [![GitHub license](https://img.shields.io/github/license/asdlokj1qpi23/subconverter.svg)](https://github.com/tindy2013/subconverter/blob/master/LICENSE)
