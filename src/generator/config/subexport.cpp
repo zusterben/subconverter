@@ -2210,7 +2210,6 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                         if (!x.Edge.empty())
                             vlessheaders.AddMember("Edge", rapidjson::StringRef(x.Edge.c_str()), allocator);
                         vlesstransport.AddMember("type", rapidjson::StringRef("ws"), allocator);
-                        vlesstransport.AddMember("path", rapidjson::StringRef(x.Path.c_str()), allocator);
                         addHeaders(vlesstransport, x, allocator);
                         proxy.AddMember("transport", vlesstransport, allocator);
                         break;
