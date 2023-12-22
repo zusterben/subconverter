@@ -2302,10 +2302,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                 proxy.AddMember("auth_str", rapidjson::StringRef(x.Auth.c_str()), allocator);
                 if (isNumeric(x.UpMbps)) {
                     proxy.AddMember("up_mbps", std::stoi(x.UpMbps), allocator);
-//                    x.UpMbps.append(search);
-//                    proxy.AddMember("up", rapidjson::StringRef(x.UpMbps.c_str()), allocator);
                 } else {
-//                    proxy.AddMember("up", rapidjson::StringRef(x.UpMbps.c_str()), allocator);
                     size_t pos = x.UpMbps.find(search);
                     if (pos != std::string::npos) {
                         x.UpMbps.replace(pos, search.length(), "");
@@ -2314,10 +2311,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                 }
                 if (isNumeric(x.DownMbps)) {
                     proxy.AddMember("down_mbps", std::stoi(x.DownMbps), allocator);
-//                    x.DownMbps.append(search);
-//                    proxy.AddMember("down", rapidjson::StringRef(x.DownMbps.c_str()), allocator);
                 } else {
-//                    proxy.AddMember("down", rapidjson::StringRef(x.DownMbps.c_str()), allocator);
                     size_t pos = x.DownMbps.find(search);
                     if (pos != std::string::npos) {
                         x.DownMbps.replace(pos, search.length(), "");
