@@ -158,7 +158,7 @@ void wireguardConstruct(Proxy &node, const std::string &group, const std::string
 void hysteriaConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &add,
                        const std::string &port, const std::string &type, const std::string &auth,const std::string &auth_str,
                        const std::string &host, const std::string &up, const std::string &down, const std::string &alpn,
-                       const std::string &obfsParam, const std::string &insecure, tribool udp, tribool tfo, tribool scv,
+                       const std::string &obfsParam, const std::string &insecure,const std::string &ports, tribool udp, tribool tfo, tribool scv,
                        tribool tls13) {
     commonConstruct(node, ProxyType::Hysteria, group, remarks, add, port, udp, tfo, scv, tls13);
     node.Auth = auth;
@@ -170,6 +170,7 @@ void hysteriaConstruct(Proxy &node, const std::string &group, const std::string 
     node.Insecure = insecure;
     node.FakeType = type;
     node.AuthStr = auth_str;
+    node.Ports = ports;
 }
 
 
@@ -858,6 +859,7 @@ void explodeVless(std::string vless, Proxy &node) {
 
 void explodeHysteria(std::string hysteria, Proxy &node) {
     printf("explodeHysteria\n");
+    hysteria = regReplace(hysteria, "(hysteria|hy)://", "hysteria://");
     if (regMatch(hysteria, "hysteria://(.*?)[:](.*)")) {
         explodeStdHysteria(hysteria, node);
         return;
@@ -1040,7 +1042,7 @@ void explodeNetch(std::string netch, Proxy &node) {
 }
 
 void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
-    std::string proxytype, ps, server, port, cipher, group, password = "", tempPassword; //common
+    std::string proxytype, ps, server, port, cipher, group, password = "",ports, tempPassword; //common
     std::string type = "none", id, aid = "0", net = "tcp", path, host, edge, tls, sni; //vmess
     std::string fp = "chrome", pbk, sid; //vless
     std::string plugin, pluginopts, pluginopts_mode, pluginopts_host, pluginopts_mux; //ss
@@ -1318,8 +1320,9 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
                 singleproxy["sni"] >> host;
                 singleproxy["alpn"][0] >> alpn;
                 singleproxy["protocol"] >> insecure;
+                singleproxy["ports"] >> ports;
 
-                hysteriaConstruct(node, group, ps, server, port, type, auth,"", host, up, down, alpn, obfsParam, insecure,
+                hysteriaConstruct(node, group, ps, server, port, type, auth,"", host, up, down, alpn, obfsParam, insecure, ports,
                                   udp, tfo, scv);
                 break;
             case "hysteria2"_hash:
@@ -1415,7 +1418,7 @@ void explodeStdHysteria(std::string hysteria, Proxy &node) {
         remarks = add + ":" + port;
 
     hysteriaConstruct(node, HYSTERIA_DEFAULT_GROUP, remarks, add, port, type, auth,auth_str, host, up, down, alpn, obfsParam,
-                      insecure);
+                      insecure,"");
     return;
 }
 
@@ -2460,7 +2463,7 @@ void explode(const std::string &link, Proxy &node) {
         explodeTrojan(link, node);
     else if (strFind(link, "vless://") || strFind(link, "vless1://"))
         explodeVless(link, node);
-    else if (strFind(link, "hysteria://"))
+    else if (strFind(link, "hysteria://") || strFind(link, "hy://"))
         explodeHysteria(link, node);
     else if (strFind(link, "hysteria2://") || strFind(link, "hy2://"))
         explodeHysteria2(link, node);
