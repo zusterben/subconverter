@@ -152,7 +152,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -195,7 +196,7 @@ jobs:
         with:
           platforms: linux/arm/v7
           context: scripts/
-          tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}-armv7
+          tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}
           build-args: |
             THREADS=4
           outputs: type=image,push=true
@@ -222,7 +223,8 @@ jobs:
         uses: actions/checkout@v3
         with:
           fetch-depth: 0
-
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v2
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
@@ -265,7 +267,7 @@ jobs:
         with:
           platforms: linux/arm64
           context: scripts/
-          tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}-arm64
+          tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}
           build-args: |
             THREADS=4
           outputs: type=image,push=true
