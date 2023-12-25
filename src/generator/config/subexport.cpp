@@ -439,8 +439,11 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 singleproxy["auth-str"] = x.Auth;
                 singleproxy["up"] = x.UpMbps;
                 singleproxy["down"] = x.DownMbps;
-                if (!tfo.is_undef())
-                    singleproxy["fast-open"] = tfo.get();
+                if (!x.Ports.empty()) {
+                    singleproxy["ports"] = x.Ports;
+                }
+                if (!tfo.is_undef()){
+                    singleproxy["fast-open"] = tfo.get();}
                 if (!x.FakeType.empty())
                     singleproxy["protocol"] = x.FakeType;
                 if (!x.Host.empty())
