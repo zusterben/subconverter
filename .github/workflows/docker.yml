@@ -174,7 +174,7 @@ jobs:
         with:
           platforms: linux/arm/v7
           context: scripts/
-          tags: asdlokj1qpi23/subconverter:latest-armv7
+          tags: asdlokj1qpi23/subconverter:latest
           build-args: |
             SHA=${{ steps.vars.outputs.sha_short }}
             THREADS=4
@@ -245,7 +245,7 @@ jobs:
         with:
           platforms: linux/arm64
           context: scripts/
-          tags: asdlokj1qpi23/subconverter:latest-arm64
+          tags: asdlokj1qpi23/subconverter:latest
           build-args: |
             SHA=${{ steps.vars.outputs.sha_short }}
             THREADS=4
