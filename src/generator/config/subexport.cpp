@@ -2409,8 +2409,12 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                     if (!x.PublicKey.empty()) {
                         reality.AddMember("public_key", rapidjson::StringRef(x.PublicKey.c_str()), allocator);
                     }
-                    auto shortIds = stringArrayToJsonArray(x.Alpn, ",", allocator);
-                    reality.AddMember("short_id", shortIds, allocator);
+//                    auto shortIds = stringArrayToJsonArray(x.ShortId, ",", allocator);
+                    if (!x.ShortId.empty()) {
+                        reality.AddMember("short_id", rapidjson::StringRef(x.ShortId.c_str()), allocator);
+                    } else {
+                        reality.AddMember("short_id", rapidjson::StringRef(""), allocator);
+                    }
                     tls.AddMember("reality", reality, allocator);
                 }
             }
