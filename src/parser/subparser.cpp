@@ -1070,9 +1070,11 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         scv = safe_as<std::string>(singleproxy["skip-cert-verify"]);
         switch (hash_(proxytype)) {
             case "vmess"_hash:
-                group = V2RAY_DEFAULT_GROUP;
-
                 singleproxy["uuid"] >>= id;
+                if (id.length() < 36) {
+                    break;
+                }
+                group = V2RAY_DEFAULT_GROUP;
                 singleproxy["alterId"] >>= aid;
                 singleproxy["cipher"] >>= cipher;
                 net = singleproxy["network"].IsDefined() ? safe_as<std::string>(singleproxy["network"]) : "tcp";
