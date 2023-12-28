@@ -2447,7 +2447,50 @@ int explodeConfContent(const std::string &content, std::vector<Proxy> &nodes) {
 
     return !nodes.empty();
 }
-
+void explodeSingbox(rapidjson::Value& outbounds, std::vector<Proxy> &nodes){
+    std::string proxytype, ps, server, port, cipher, group, password = "",ports, tempPassword; //common
+    std::string type = "none", id, aid = "0", net = "tcp", path, host, edge, tls, sni; //vmess
+    std::string fp = "chrome", pbk, sid; //vless
+    std::string plugin, pluginopts, pluginopts_mode, pluginopts_host, pluginopts_mux; //ss
+    std::string protocol, protoparam, obfs, obfsparam; //ssr
+    std::string flow, mode; //trojan
+    std::string user; //socks
+    std::string ip, ipv6, private_key, public_key, mtu; //wireguard
+    std::string auth, up, down, obfsParam, insecure, alpn;//hysteria
+    std::string obfsPassword;//hysteria2
+    string_array dns_server;
+    tribool udp, tfo, scv;
+    for (rapidjson::SizeType i = 0; i < outbounds.Size(); ++i) {
+        if (outbounds[i].IsObject()) {
+            rapidjson::Value node = outbounds[i].GetObject();
+            if (node.HasMember("type") && node["type"].IsString()) {
+                std::string singboxType = node["type"].GetString();
+                switch (hash_(singboxType)) {
+                    case "vmess"_hash:
+                        break;
+                    case "shadowsocks"_hash:
+                        break;
+                    case "trojan"_hash:
+                        break;
+                    case "vless"_hash:
+                        break;
+                    case "http"_hash:
+                        break;
+                    case "wireguard"_hash:
+                        break;
+                    case "socks"_hash:
+                        break;
+                    case "hysteria"_hash:
+                        break;
+                    case "hysteria2"_hash:
+                        break;
+                    default:
+                        continue;
+                }
+            }
+        }
+    }
+}
 void explode(const std::string &link, Proxy &node) {
     if (startsWith(link, "ssr://"))
         explodeSSR(link, node);
@@ -2500,7 +2543,24 @@ void explodeSub(std::string sub, std::vector<Proxy> &nodes) {
         //ignore
         throw;
     }
-
+    try {
+        if (!processed && regFind(sub, "^(?=.*(\"?(inbounds)\"?:))(?=.*(\"?(outbounds)\"?:))(?=.*(\"?(route)\"?:)).*")) {
+            rapidjson::Document document;
+            document.Parse(sub.c_str());
+            if (!document.HasParseError() || document.IsObject()) {
+                rapidjson::Value& value = document["outbounds"];
+                if (value.IsArray() && !value.Empty()) {
+                    explodeSingbox(value,nodes);
+                    processed = true;
+                }
+            }
+        }
+    }
+    catch (std::exception &e) {
+        //writeLog(0, e.what(), LOG_LEVEL_DEBUG);
+        //ignore
+        throw;
+    }
     //try to parse as surge configuration
     if (!processed && explodeSurge(sub, nodes)) {
         processed = true;
