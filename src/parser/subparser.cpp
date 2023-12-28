@@ -2447,6 +2447,7 @@ int explodeConfContent(const std::string &content, std::vector<Proxy> &nodes) {
 
     return !nodes.empty();
 }
+
 void explodeSingbox(rapidjson::Value& outbounds, std::vector<Proxy> &nodes){
     std::string proxytype, ps, server, port, cipher, group, password = "",ports, tempPassword; //common
     std::string type = "none", id, aid = "0", net = "tcp", path, host, edge, tls, sni; //vmess
@@ -2462,11 +2463,23 @@ void explodeSingbox(rapidjson::Value& outbounds, std::vector<Proxy> &nodes){
     tribool udp, tfo, scv;
     for (rapidjson::SizeType i = 0; i < outbounds.Size(); ++i) {
         if (outbounds[i].IsObject()) {
-            rapidjson::Value node = outbounds[i].GetObject();
-            if (node.HasMember("type") && node["type"].IsString()) {
-                std::string singboxType = node["type"].GetString();
+            rapidjson::Value singboxNode = outbounds[i].GetObject();
+            if (singboxNode.HasMember("type") && singboxNode["type"].IsString()) {
+                Proxy node;
+                std::string singboxType = singboxNode["type"].GetString();
+                ps = GetMember(singboxNode,"tag");
+                server = GetMember(singboxNode,"server");
+                port =  GetMember(singboxNode,"server_port");
                 switch (hash_(singboxType)) {
                     case "vmess"_hash:
+                        id =  GetMember(singboxNode,"uuid");
+                        if (id.length() < 36) {
+                            break;
+                        }
+                        aid = GetMember(singboxNode,"alter_id");
+                        cipher =  GetMember(singboxNode,"security");
+                        vmessConstruct(node, group, ps, server, port, "", id, aid, net, cipher, path, host, edge, tls, sni, udp,
+                                       tfo, scv);
                         break;
                     case "shadowsocks"_hash:
                         break;

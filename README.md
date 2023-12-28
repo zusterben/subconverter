@@ -62,6 +62,7 @@ services:
 | V2Ray                             |     ✓     |      ✓       | v2ray          |
 | Telegram-liked HTTP/Socks 5 links |     ✓     |      ×       | Only as source |
 | Singbox                           |     ×      |      ✓       | singbox        |
+
 Notice:
 
 1. Shadowrocket users should use `ss`, `ssr` or `v2ray` as target.
