@@ -2166,6 +2166,9 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                 if (!x.Plugin.empty() && !x.PluginOption.empty()) {
                     if (x.Plugin == "simple-obfs")
                         x.Plugin = "obfs-local";
+                    if (x.Plugin != "obfs-local" || x.Plugin != "v2ray-plugin") {
+                        continue;
+                    }
                     proxy.AddMember("plugin", rapidjson::StringRef(x.Plugin.c_str()), allocator);
                     proxy.AddMember("plugin_opts", rapidjson::StringRef(x.PluginOption.c_str()), allocator);
                 }
@@ -2279,7 +2282,9 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                     auto reserved = stringArrayToJsonArray(x.ClientId, ",", allocator);
                     peer.AddMember("reserved", reserved, allocator);
                 }
-
+                if (!x.Password.empty()) {
+                    proxy.AddMember("pre_shared_key", rapidjson::StringRef(x.Password.c_str()), allocator);
+                }
                 rapidjson::Value peers(rapidjson::kArrayType);
                 peers.PushBack(peer, allocator);
                 proxy.AddMember("peers", peers, allocator);
@@ -2369,15 +2374,13 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                     proxy.AddMember("down_mbps", std::stoi(x.DownMbps), allocator);
                 }
                 if (!x.OBFSParam.empty()) {
+                    rapidjson::Value obfs(rapidjson::kObjectType);
+                    obfs.AddMember("type", rapidjson::StringRef(x.OBFSParam.c_str()), allocator);
                     if (!x.OBFSPassword.empty()) {
-                        proxy.AddMember("obfs", rapidjson::StringRef(std::string(
-                                                R"({ "type": )" + x.OBFSParam + ",password: \"" + x.OBFSPassword + "\"}").c_str()),
-                                        allocator);
-                    } else {
-                        proxy.AddMember("obfs",
-                                        rapidjson::StringRef(std::string(R"({ "type": )" + x.OBFSParam + "}").c_str()),
-                                        allocator);
+                        obfs.AddMember("password", rapidjson::StringRef(x.OBFSPassword.c_str()), allocator);
                     }
+                    proxy.AddMember("obfs", obfs, allocator);
+
                 }
                 break;
             }
