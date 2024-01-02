@@ -501,6 +501,7 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 }
                 switch (hash_(x.TransferProtocol)) {
                     case "tcp"_hash:
+                        singleproxy["network"] = x.TransferProtocol;
                         break;
                     case "ws"_hash:
                         singleproxy["network"] = x.TransferProtocol;
@@ -2166,7 +2167,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                 if (!x.Plugin.empty() && !x.PluginOption.empty()) {
                     if (x.Plugin == "simple-obfs")
                         x.Plugin = "obfs-local";
-                    if (x.Plugin != "obfs-local" || x.Plugin != "v2ray-plugin") {
+                    if (x.Plugin != "obfs-local" && x.Plugin != "v2ray-plugin") {
                         continue;
                     }
                     proxy.AddMember("plugin", rapidjson::StringRef(x.Plugin.c_str()), allocator);

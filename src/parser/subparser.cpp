@@ -2520,6 +2520,18 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
                     if (tlsObj.HasMember("insecure") && tlsObj["insecure"].IsBool()) {
                         scv = tlsObj["insecure"].GetBool();
                     }
+                    if (tlsObj.HasMember("reality") && tlsObj["reality"].IsObject()) {
+                        rapidjson::Value reality = tlsObj["reality"].GetObject();
+                        if (reality.HasMember("server_name") && reality["server_name"].IsString()) {
+                            host = reality["server_name"].GetString();
+                        }
+                        if (reality.HasMember("public_key") && reality["public_key"].IsString()) {
+                            pbk = reality["public_key"].GetString();
+                        }
+                        if (reality.HasMember("short_id") && reality["short_id"].IsString()) {
+                            sid = reality["short_id"].GetString();
+                        }
+                    }
                 }
                 switch (hash_(proxytype)) {
                     case "vmess"_hash:
@@ -2629,7 +2641,8 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
                         auth = GetMember(singboxNode, "auth_str");
                         type = GetMember(singboxNode, "network");
                         obfsParam = GetMember(singboxNode, "obfs");
-                        hysteriaConstruct(node, group, ps, server, port, type, auth,"", host, up, down, alpn, obfsParam, insecure, ports,
+                        hysteriaConstruct(node, group, ps, server, port, type, auth, "", host, up, down, alpn,
+                                          obfsParam, insecure, ports,
                                           udp, tfo, scv);
                         break;
                     case "hysteria2"_hash:
