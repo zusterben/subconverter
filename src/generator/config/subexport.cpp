@@ -466,8 +466,12 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 singleproxy["type"] = "hysteria2";
                 singleproxy["password"] = x.Password;
                 singleproxy["auth"] = x.Password;
-                if (!x.ServerName.empty())
+                if (!x.PublicKey.empty()) {
+                    singleproxy["ca-str"] = x.PublicKey;
+                }
+                if (!x.ServerName.empty()) {
                     singleproxy["sni"] = x.ServerName;
+                }
                 if (!x.UpMbps.empty())
                     singleproxy["up"] = x.UpMbps;
                 if (!x.DownMbps.empty())
@@ -2368,6 +2372,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                 addSingBoxCommonMembers(proxy, x, "hysteria2", allocator);
                 proxy.AddMember("password", rapidjson::StringRef(x.Password.c_str()), allocator);
                 if (!x.TLSSecure) {
+
                     rapidjson::Value tls(rapidjson::kObjectType);
                     tls.AddMember("enabled", true, allocator);
                     if (!x.ServerName.empty())
@@ -2375,6 +2380,9 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                     if (!x.Alpn.empty()) {
                         auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
                         tls.AddMember("alpn", alpns, allocator);
+                    }
+                    if (!x.PublicKey.empty()) {
+                        tls.AddMember("certificate", rapidjson::StringRef(x.PublicKey.c_str()), allocator);
                     }
                     tls.AddMember("insecure", buildBooleanValue(scv), allocator);
                     proxy.AddMember("tls", tls, allocator);
