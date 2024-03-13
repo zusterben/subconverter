@@ -4,8 +4,6 @@ on:
     branches: [ master ]
     tags:
       - '**'
-  workflow_dispatch:
-  pull_request:
 
 concurrency: 
   group: ${{ github.ref }}-${{ github.workflow }}
@@ -131,8 +129,6 @@ jobs:
         with:
           platforms: linux/386
           context: scripts/
-          build-args: |
-            SHA=${{ steps.vars.outputs.sha_short }}
           tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}
           outputs: type=image,push=true
 
@@ -204,7 +200,6 @@ jobs:
           context: scripts/
           tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}
           build-args: |
-            SHA=${{ steps.vars.outputs.sha_short }}
             THREADS=4
           outputs: type=image,push=true
 
@@ -276,7 +271,6 @@ jobs:
           context: scripts/
           tags: asdlokj1qpi23/subconverter:${{steps.version.outputs.result}}
           build-args: |
-            SHA=${{ steps.vars.outputs.sha_short }}
             THREADS=4
           outputs: type=image,push=true
 
