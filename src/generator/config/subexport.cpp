@@ -1983,7 +1983,7 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf, std::vector
                 proxy += ", peers=[{" + generatePeer(x, true) + "}]";
                 break;
             case ProxyType::Hysteria2:
-                proxy = "Hysteria2," + hostname + "," + port + "," + username + ",\"" + password + "\"";
+                proxy = "Hysteria2," + hostname + "," + port + ",\"" + password + "\"";
                 if(!x.ServerName.empty()){
                     proxy += ",sni="+x.ServerName;
                 }
