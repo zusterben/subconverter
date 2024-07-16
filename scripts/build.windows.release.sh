@@ -48,6 +48,8 @@ python -m ensurepip
 python -m pip install gitpython
 python scripts/update_rules.py -c scripts/rules_config.conf
 
+pacman -S mingw-w64-x86_64-openssl
+
 rm -f C:/Strawberry/perl/bin/pkg-config C:/Strawberry/perl/bin/pkg-config.bat
 cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" .
 make -j4
