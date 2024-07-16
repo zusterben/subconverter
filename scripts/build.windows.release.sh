@@ -1,5 +1,6 @@
 #!/bin/bash
 set -xe
+pacman -S --noconfirm mingw-w64-x86_64-openssl
 
 #git clone https://github.com/curl/curl --depth=1 --branch tiny-curl-8_4
 #cd curl
@@ -47,8 +48,6 @@ cd ..
 python -m ensurepip
 python -m pip install gitpython
 python scripts/update_rules.py -c scripts/rules_config.conf
-
-pacman -S mingw-w64-x86_64-openssl
 
 rm -f C:/Strawberry/perl/bin/pkg-config C:/Strawberry/perl/bin/pkg-config.bat
 cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" .
