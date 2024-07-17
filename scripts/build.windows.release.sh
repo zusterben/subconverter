@@ -16,7 +16,20 @@ pacman -S --needed --noconfirm base-devel ${TOOLCHAIN}-toolchain ${TOOLCHAIN}-cm
 
 git clone https://github.com/curl/curl --depth=1 --branch curl-8_4_0
 cd curl
-cmake -DCMAKE_BUILD_TYPE=Release -DCURL_USE_LIBSSH2=OFF -DHTTP_ONLY=ON -DCURL_USE_SCHANNEL=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF -DCMAKE_INSTALL_PREFIX="$MINGW_PREFIX" -G "Unix Makefiles" -DHAVE_LIBIDN2=OFF -DCURL_USE_LIBPSL=OFF .
+cmake -DCMAKE_BUILD_TYPE=Release \
+      -DCURL_USE_LIBSSH2=OFF \
+      -DHTTP_ONLY=ON \
+      -DCURL_USE_SCHANNEL=ON \
+      -DBUILD_SHARED_LIBS=OFF \
+      -DBUILD_CURL_EXE=OFF \
+      -DCMAKE_INSTALL_PREFIX="$MINGW_PREFIX" \
+      -G "Unix Makefiles" \
+      -DHAVE_LIBIDN2=OFF \
+      -DCURL_USE_LIBPSL=OFF \
+      -DCURL_STATICLIB=ON \
+      -DCURL_DISABLE_SOCKETPAIR=ON \
+      -DCURL_DISABLE_NONBLOCKING=ON .
+
 make install -j4
 cd ..
 
