@@ -5,10 +5,8 @@ set -xe
 ARCH=$(uname -m)
 
 if [ "$ARCH" == "x86_64" ]; then
-    MY_MINGW_PREFIX="/mingw64"
     TOOLCHAIN="mingw-w64-x86_64"
 else
-    MY_MINGW_PREFIX="/mingw32"
     TOOLCHAIN="mingw-w64-i686"
 fi
 
