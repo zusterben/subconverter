@@ -61,5 +61,5 @@ cmake -DCMAKE_BUILD_TYPE=Release -G "Unix Makefiles" .
 make -j4
 rm subconverter.exe
 # shellcheck disable=SC2046
-g++ $(find CMakeFiles/subconverter.dir/src -name "*.obj") -lcurl -lssl -lcrypto -o base/subconverter.exe -static -lbcrypt -lpcre2-8 -l:quickjs/libquickjs.a -llibcron -lyaml-cpp -liphlpapi -lcrypt32 -lws2_32 -lwsock32 -lz -s -L"$MINGW_PREFIX/lib" -I"$MINGW_PREFIX/include" -L"$MY_MINGW_PREFIX/lib" -I"$MY_MINGW_PREFIX/include"
+g++ $(find CMakeFiles/subconverter.dir/src -name "*.obj") -lcurl -lssl -lcrypto -lnghttp2 -lnghttp3 -lssh2 -o base/subconverter.exe -static -lbcrypt -lpcre2-8 -l:quickjs/libquickjs.a -llibcron -lyaml-cpp -liphlpapi -lcrypt32 -lws2_32 -lwsock32 -lz -s -L"$MINGW_PREFIX/lib" -I"$MINGW_PREFIX/include" -L"$MY_MINGW_PREFIX/lib" -I"$MY_MINGW_PREFIX/include"
 mv base subconverter
