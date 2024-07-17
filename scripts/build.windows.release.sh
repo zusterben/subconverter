@@ -6,11 +6,15 @@ ARCH=$(uname -m)
 
 if [ "$ARCH" == "x86_64" ]; then
     MY_MINGW_PREFIX="/mingw64"
+    TOOLCHAIN="mingw-w64-x86_64"
 else
     MY_MINGW_PREFIX="/mingw32"
+    TOOLCHAIN="mingw-w64-i686"
 fi
 
-git clone https://github.com/curl/curl --depth=1 --branch tiny-curl-8_4
+pacman -S --needed --noconfirm base-devel ${TOOLCHAIN}-toolchain ${TOOLCHAIN}-cmake ${TOOLCHAIN}-nghttp2 ${TOOLCHAIN}-openssl
+
+git clone https://github.com/curl/curl --depth=1 --branch curl-8_4_0
 cd curl
 cmake -DCMAKE_BUILD_TYPE=Release -DCURL_USE_LIBSSH2=OFF -DHTTP_ONLY=ON -DCURL_USE_SCHANNEL=ON -DBUILD_SHARED_LIBS=OFF -DBUILD_CURL_EXE=OFF -DCMAKE_INSTALL_PREFIX="$MINGW_PREFIX" -G "Unix Makefiles" -DHAVE_LIBIDN2=OFF -DCURL_USE_LIBPSL=OFF .
 make install -j4
