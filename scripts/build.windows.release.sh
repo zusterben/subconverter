@@ -14,7 +14,7 @@ fi
 
 pacman -S --needed --noconfirm base-devel ${TOOLCHAIN}-toolchain ${TOOLCHAIN}-cmake ${TOOLCHAIN}-nghttp2 ${TOOLCHAIN}-openssl
 
-git clone https://github.com/curl/curl --depth=1 --branch curl-8_4_0
+git clone https://github.com/curl/curl --depth=1 --branch curl-8_8_0
 cd curl
 cmake -DCMAKE_BUILD_TYPE=Release \
       -DCURL_USE_LIBSSH2=OFF \
