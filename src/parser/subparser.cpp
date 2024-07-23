@@ -1342,6 +1342,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
                     singleproxy["reality-opts"]["short-id"] >>= sid;
                 }
                 singleproxy["flow"] >>= flow;
+                singleproxy["client-fingerprint"] >>= fp;
 
                 vlessConstruct(node, XRAY_DEFAULT_GROUP, ps, server, port, type, id, aid, net, "auto", flow, mode, path,
                                host, "", tls, pbk, sid, fp, sni);

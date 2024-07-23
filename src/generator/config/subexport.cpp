@@ -534,10 +534,13 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 if (!x.ServerName.empty())
                     singleproxy["servername"] = x.ServerName;
                 if (!x.ShortId.empty()) {
-                    singleproxy["reality-opts"]["short-id"] = x.ShortId;
+                    singleproxy["reality-opts"]["short-id"] = ""+x.ShortId;
                 }
                 if (!x.PublicKey.empty() || x.Flow == "xtls-rprx-vision") {
                     singleproxy["client-fingerprint"] = "chrome";
+                }
+                if(!x.Fingerprint.empty()){
+                    singleproxy["client-fingerprint"] = x.Fingerprint;
                 }
                 switch (hash_(x.TransferProtocol)) {
                     case "tcp"_hash:
@@ -678,6 +681,33 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
         yamlnode["Proxy Group"] = original_groups;
 }
 
+void formatterShortId(std::string &input){
+    std::string target = "short-id:";
+    size_t startPos = input.find(target);
+
+    while (startPos != std::string::npos) {
+        // 查找对应实例的结束位置
+        size_t endPos = input.find("}", startPos);
+
+        if (endPos != std::string::npos) {
+            // 提取原始id
+            std::string originalId = input.substr(startPos + target.length(), endPos - startPos - target.length());
+
+            // 去除原始id中的空格
+            originalId.erase(remove_if(originalId.begin(), originalId.end(), ::isspace), originalId.end());
+
+            // 添加引号
+            std::string modifiedId = "\"" + originalId + "\"";
+
+            // 替换原始id为修改后的id
+            input.replace(startPos + target.length(), endPos - startPos - target.length(), modifiedId);
+        }
+
+        // 继续查找下一个实例
+        startPos = input.find(target, startPos + 1);
+    }
+
+}
 std::string proxyToClash(std::vector<Proxy> &nodes, const std::string &base_conf,
                          std::vector<RulesetContent> &ruleset_content_array, const ProxyGroupConfigs &extra_proxy_group,
                          bool clashR, extra_settings &ext) {
@@ -725,6 +755,7 @@ std::string proxyToClash(std::vector<Proxy> &nodes, const std::string &base_conf
     //rulesetToClash(yamlnode, ruleset_content_array, ext.overwrite_original_rules, ext.clash_new_field_name);
     //std::string output_content = YAML::Dump(yamlnode);
     replaceAll(output_content, "!<str> ", "");
+    formatterShortId(output_content);
     return output_content;
 }
 
