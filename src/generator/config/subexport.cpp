@@ -277,6 +277,12 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 singleproxy["alterId"] = x.AlterId;
                 singleproxy["cipher"] = x.EncryptMethod;
                 singleproxy["tls"] = x.TLSSecure;
+                if (!x.AlpnList.empty()) {
+                    for (auto &item: x.AlpnList) {
+                        singleproxy["alpn"].push_back(item);
+                    }
+                } else if (!x.Alpn.empty())
+                    singleproxy["alpn"].push_back(x.Alpn);
                 if (!scv.is_undef())
                     singleproxy["skip-cert-verify"] = scv.get();
                 if (!x.ServerName.empty())
@@ -386,6 +392,12 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 else if (!x.Host.empty()) {
                     singleproxy["sni"] = x.Host;
                 }
+                if (!x.AlpnList.empty()) {
+                    for (auto &item: x.AlpnList) {
+                        singleproxy["alpn"].push_back(item);
+                    }
+                } else if (!x.Alpn.empty())
+                    singleproxy["alpn"].push_back(x.Alpn);
                 if (std::all_of(x.Password.begin(), x.Password.end(), ::isdigit) && !x.Password.empty()) {
                     singleproxy["password"].SetTag("str");
                 }
@@ -520,6 +532,11 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 singleproxy["type"] = "vless";
                 singleproxy["uuid"] = x.UserId;
                 singleproxy["tls"] = x.TLSSecure;
+                if (!x.AlpnList.empty()) {
+                    for (auto &item: x.AlpnList) {
+                        singleproxy["alpn"].push_back(item);
+                    }
+                }
                 if (!tfo.is_undef())
                     singleproxy["tfo"] = tfo.get();
                 if (xudp && udp)
@@ -534,12 +551,12 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 if (!x.ServerName.empty())
                     singleproxy["servername"] = x.ServerName;
                 if (!x.ShortId.empty()) {
-                    singleproxy["reality-opts"]["short-id"] = ""+x.ShortId;
+                    singleproxy["reality-opts"]["short-id"] = "" + x.ShortId;
                 }
                 if (!x.PublicKey.empty() || x.Flow == "xtls-rprx-vision") {
                     singleproxy["client-fingerprint"] = "chrome";
                 }
-                if(!x.Fingerprint.empty()){
+                if (!x.Fingerprint.empty()) {
                     singleproxy["client-fingerprint"] = x.Fingerprint;
                 }
                 switch (hash_(x.TransferProtocol)) {
@@ -681,7 +698,7 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
         yamlnode["Proxy Group"] = original_groups;
 }
 
-void formatterShortId(std::string &input){
+void formatterShortId(std::string &input) {
     std::string target = "short-id:";
     size_t startPos = input.find(target);
 
@@ -708,6 +725,7 @@ void formatterShortId(std::string &input){
     }
 
 }
+
 std::string proxyToClash(std::vector<Proxy> &nodes, const std::string &base_conf,
                          std::vector<RulesetContent> &ruleset_content_array, const ProxyGroupConfigs &extra_proxy_group,
                          bool clashR, extra_settings &ext) {
@@ -2255,6 +2273,14 @@ static rapidjson::Value stringArrayToJsonArray(const std::string &array, const s
     return result;
 }
 
+static rapidjson::Value
+vectorToJsonArray(const std::vector<std::string> &array, rapidjson::MemoryPoolAllocator<> &allocator) {
+    rapidjson::Value result(rapidjson::kArrayType);
+    for (const auto &x: array)
+        result.PushBack(rapidjson::Value(trim(x).c_str(), allocator), allocator);
+    return result;
+}
+
 bool isNumeric(const std::string &str) {
     for (char c: str) {
         if (!std::isdigit(static_cast<unsigned char>(c))) {
@@ -2539,7 +2565,7 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                 if (!x.TLSSecure && !x.Alpn.empty()) {
                     rapidjson::Value tls(rapidjson::kObjectType);
                     tls.AddMember("enabled", true, allocator);
-                    if(!scv.is_undef()){
+                    if (!scv.is_undef()) {
                         tls.AddMember("insecure", buildBooleanValue(scv), allocator);
                     }
                     if (!x.ServerName.empty())
@@ -2548,18 +2574,18 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                         auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
                         tls.AddMember("alpn", alpns, allocator);
                     }
-                    if(!x.DisableSni.is_undef()){
+                    if (!x.DisableSni.is_undef()) {
                         tls.AddMember("disable_sni", buildBooleanValue(x.DisableSni), allocator);
                     }
                     proxy.AddMember("tls", tls, allocator);
                 }
-                if (!x.CongestionControl.empty()){
+                if (!x.CongestionControl.empty()) {
                     proxy.AddMember("congestion_control", rapidjson::StringRef(x.CongestionControl.c_str()), allocator);
                 }
-                if (!x.UdpRelayMode.empty()){
+                if (!x.UdpRelayMode.empty()) {
                     proxy.AddMember("udp_relay_mode", rapidjson::StringRef(x.UdpRelayMode.c_str()), allocator);
                 }
-                if (!x.ReduceRtt.is_undef()){
+                if (!x.ReduceRtt.is_undef()) {
                     proxy.AddMember("zero_rtt_handshake", buildBooleanValue(x.ReduceRtt), allocator);
                 }
                 break;
@@ -2572,7 +2598,10 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
             tls.AddMember("enabled", true, allocator);
             if (!x.ServerName.empty())
                 tls.AddMember("server_name", rapidjson::StringRef(x.ServerName.c_str()), allocator);
-            if (!x.Alpn.empty()) {
+            if (!x.AlpnList.empty()) {
+                auto alpns = vectorToJsonArray(x.AlpnList, allocator);
+                tls.AddMember("alpn", alpns, allocator);
+            } else if (!x.Alpn.empty()) {
                 auto alpns = stringArrayToJsonArray(x.Alpn, ",", allocator);
                 tls.AddMember("alpn", alpns, allocator);
             }
