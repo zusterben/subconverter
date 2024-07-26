@@ -131,6 +131,7 @@ struct Proxy {
     uint16_t RequestTimeout = 15000;
     String token;
     std::vector<String> AlpnList;
+    String PacketEncoding;
 };
 
 #define SS_DEFAULT_GROUP "SSProvider"

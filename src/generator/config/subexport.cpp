@@ -541,6 +541,9 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                     singleproxy["tfo"] = tfo.get();
                 if (xudp && udp)
                     singleproxy["xudp"] = true;
+                if(!x.PacketEncoding.empty()){
+                    singleproxy["packet-encoding"] = x.PacketEncoding;
+                }
                 if (!x.Flow.empty())
                     singleproxy["flow"] = x.Flow;
                 if (!scv.is_undef())
@@ -714,7 +717,7 @@ void formatterShortId(std::string &input) {
             originalId.erase(remove_if(originalId.begin(), originalId.end(), ::isspace), originalId.end());
 
             // 添加引号
-            std::string modifiedId = "\"" + originalId + "\"";
+            std::string modifiedId = " \"" + originalId + "\" ";
 
             // 替换原始id为修改后的id
             input.replace(startPos + target.length(), endPos - startPos - target.length(), modifiedId);
@@ -2367,6 +2370,9 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json, std::vector
                     proxy.AddMember("packet_encoding", rapidjson::StringRef("xudp"), allocator);
                 if (!x.Flow.empty())
                     proxy.AddMember("flow", rapidjson::StringRef(x.Flow.c_str()), allocator);
+                if(!x.PacketEncoding.empty()){
+                    proxy.AddMember("packet_encoding", rapidjson::StringRef(x.PacketEncoding.c_str()), allocator);
+                }
                 rapidjson::Value vlesstransport(rapidjson::kObjectType);
                 rapidjson::Value vlessheaders(rapidjson::kObjectType);
                 switch (hash_(x.TransferProtocol)) {
