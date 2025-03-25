@@ -161,7 +161,8 @@ void processRemark(std::string &remark, const string_array &remarks_list, bool p
     }
     std::string tempRemark = remark;
     int cnt = 2;
-    while (std::find(remarks_list.cbegin(), remarks_list.cend(), tempRemark) != remarks_list.cend()) {
+    while(std::find(remarks_list.cbegin(), remarks_list.cend(), tempRemark) != remarks_list.cend())
+    {
         tempRemark = remark + " " + std::to_string(cnt);
         cnt++;
     }
@@ -217,6 +218,30 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
             break;
         case "compact"_hash:
             compact = true;
+            break;
+    bool proxy_block = false, proxy_compact = false, group_block = false, group_compact = false;
+    switch(hash_(ext.clash_proxies_style))
+    {
+    case "block"_hash:
+        proxy_block = true;
+        break;
+    default:
+    case "flow"_hash:
+        break;
+    case "compact"_hash:
+        proxy_compact = true;
+        break;
+    }
+    switch(hash_(ext.clash_proxy_groups_style))
+    {
+        case "block"_hash:
+            group_block = true;
+            break;
+        default:
+        case "flow"_hash:
+            break;
+        case "compact"_hash:
+            group_compact = true;
             break;
     }
 
@@ -644,7 +669,10 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
         string_array filtered_nodelist;
 
         singlegroup["name"] = x.Name;
-        singlegroup["type"] = x.TypeStr();
+        if (x.Type == ProxyGroupType::Smart)
+            singlegroup["type"] = "url-test";
+        else
+            singlegroup["type"] = x.TypeStr();
 
         switch (x.Type) {
             case ProxyGroupType::Select:
@@ -666,6 +694,29 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                 break;
             default:
                 continue;
+        switch(x.Type)
+        {
+        case ProxyGroupType::Select:
+        case ProxyGroupType::Relay:
+            break;
+        case ProxyGroupType::LoadBalance:
+            singlegroup["strategy"] = x.StrategyStr();
+            [[fallthrough]];
+        case ProxyGroupType::Smart:
+            [[fallthrough]];
+        case ProxyGroupType::URLTest:
+            if(!x.Lazy.is_undef())
+                singlegroup["lazy"] = x.Lazy.get();
+            [[fallthrough]];
+        case ProxyGroupType::Fallback:
+            singlegroup["url"] = x.Url;
+            if(x.Interval > 0)
+                singlegroup["interval"] = x.Interval;
+            if(x.Tolerance > 0)
+                singlegroup["tolerance"] = x.Tolerance;
+            break;
+        default:
+            continue;
         }
         if (!x.DisableUdp.is_undef())
             singlegroup["disable-udp"] = x.DisableUdp.get();
@@ -681,7 +732,10 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
         }
         if (!filtered_nodelist.empty())
             singlegroup["proxies"] = filtered_nodelist;
-        //singlegroup.SetStyle(YAML::EmitterStyle::Flow);
+        if(group_block)
+            singlegroup.SetStyle(YAML::EmitterStyle::Block);
+        else
+            singlegroup.SetStyle(YAML::EmitterStyle::Flow);
 
         bool replace_flag = false;
         for (auto &&original_group: original_groups) {
@@ -694,6 +748,8 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
         if (!replace_flag)
             original_groups.push_back(singlegroup);
     }
+    if(group_compact)
+        original_groups.SetStyle(YAML::EmitterStyle::Flow);
 
     if (ext.clash_new_field_name)
         yamlnode["proxy-groups"] = original_groups;
@@ -975,11 +1031,18 @@ std::string proxyToSurge(std::vector<Proxy> &nodes, const std::string &base_conf
                     proxy += ", version=" + std::to_string(x.SnellVersion);
                 break;
             case ProxyType::Hysteria2:
-                if (surge_ver < 4 && surge_ver != -3)
+                if(surge_ver < 4)
                     continue;
-                proxy = "hysteria2, " + hostname + ", " + port + ", password=" + password;
-                if (!scv.is_undef())
-                    proxy += ", skip-cert-verify=" + scv.get_str();
+                proxy = "hysteria, " + hostname + ", " + port + ", password=" + password;
+                if(x.DownSpeed)
+                    proxy += ", download-bandwidth=" + x.DownSpeed;
+
+                if(!scv.is_undef())
+                    proxy += ",skip-cert-verify=" + std::string(scv.get() ? "true" : "false");
+                if(!x.Fingerprint.empty())
+                    proxy += ",server-cert-fingerprint-sha256=" + x.Fingerprint;
+                if(!x.SNI.empty())
+                    proxy += ",sni=" + x.SNI;
                 break;
             case ProxyType::WireGuard:
                 if (surge_ver < 4 && surge_ver != -3)
@@ -1011,7 +1074,8 @@ std::string proxyToSurge(std::vector<Proxy> &nodes, const std::string &base_conf
             proxy += ", tfo=" + tfo.get_str();
         if (!udp.is_undef())
             proxy += ", udp-relay=" + udp.get_str();
-
+        if (underlying_proxy != "")
+            proxy += ", underlying-proxy=" + underlying_proxy;
         if (ext.nodelist)
             output_nodelist += x.Remark + " = " + proxy + "\n";
         else {
@@ -1030,22 +1094,24 @@ std::string proxyToSurge(std::vector<Proxy> &nodes, const std::string &base_conf
         string_array filtered_nodelist;
         std::string group;
 
-        switch (x.Type) {
-            case ProxyGroupType::Select:
-            case ProxyGroupType::URLTest:
-            case ProxyGroupType::Fallback:
-                break;
-            case ProxyGroupType::LoadBalance:
-                if (surge_ver < 1 && surge_ver != -3)
-                    continue;
-                break;
-            case ProxyGroupType::SSID:
-                group = x.TypeStr() + ",default=" + x.Proxies[0] + ",";
+        switch(x.Type)
+        {
+        case ProxyGroupType::Select:
+        case ProxyGroupType::Smart:
+        case ProxyGroupType::URLTest:
+        case ProxyGroupType::Fallback:
+            break;
+        case ProxyGroupType::LoadBalance:
+            if(surge_ver < 1 && surge_ver != -3)
+                continue;
+            break;
+        case ProxyGroupType::SSID:
+            group = x.TypeStr() + ",default=" + x.Proxies[0] + ",";
                 group += join(x.Proxies.begin() + 1, x.Proxies.end(), ",");
                 ini.set("{NONAME}", x.Name + " = " + group); //insert order
-                continue;
-            default:
-                continue;
+            continue;
+        default:
+            continue;
         }
 
         for (const auto &y: x.Proxies)
@@ -1693,7 +1759,8 @@ void proxyToQuanX(std::vector<Proxy> &nodes, INIReader &ini, std::vector<Ruleset
         std::string proxies = join(filtered_nodelist, ", ");
 
         std::string singlegroup = type + "=" + x.Name + ", " + proxies;
-        if (type != "static") {
+        if(x.Type != ProxyGroupType::Select && x.Type != ProxyGroupType::SSID)
+        {
             singlegroup += ", check-interval=" + std::to_string(x.Interval);
             if (x.Tolerance > 0)
                 singlegroup += ", tolerance=" + std::to_string(x.Tolerance);

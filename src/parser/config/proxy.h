@@ -9,7 +9,8 @@
 using String = std::string;
 using StringArray = std::vector<String>;
 
-enum class ProxyType {
+enum class ProxyType
+{
     Unknown,
     Shadowsocks,
     ShadowsocksR,
