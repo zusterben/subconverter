@@ -22,22 +22,20 @@ cmake -G "Unix Makefiles" \
 make quickjs -j4
 # 如果是 32 位编译，则处理 libquickjs.a，去掉重复定义的符号
 # 注意：此处通过检测目标架构环境变量，你也可以根据实际情况加个判断
-if [ "$MINGW_ARCH" = "i686" ]; then
-  echo "处理 32 位 libquickjs.a，去除重复定义的符号..."
-  mkdir -p tmp_lib
-  cd tmp_lib
-  # 解包静态库
-  ar x ../quickjs/libquickjs.a
-  # 对每个目标文件，删除这几个符号
-  for obj in *.o; do
-    objcopy --strip-symbol=__mingw_fe_pc53_env --strip-symbol=__mingw_fe_pc64_env --strip-symbol=__mingw_fe_dfl_env "$obj"
-  done
-  # 重新打包为新的静态库
-  ar rcs ../quickjs/libquickjs_fixed.a *.o
-  cd ..
-  # 用处理后的库覆盖原库（或直接安装新库）
-  mv quickjs/libquickjs_fixed.a quickjs/libquickjs.a
-fi
+echo "处理 32 位 libquickjs.a，去除重复定义的符号..."
+mkdir -p tmp_lib
+cd tmp_lib
+# 解包静态库
+ar x ../quickjs/libquickjs.a
+# 对每个目标文件，删除这几个符号
+for obj in *.o; do
+  objcopy --strip-symbol=__mingw_fe_pc53_env --strip-symbol=__mingw_fe_pc64_env --strip-symbol=__mingw_fe_dfl_env "$obj"
+done
+# 重新打包为新的静态库
+ar rcs ../quickjs/libquickjs_fixed.a *.o
+cd ..
+# 用处理后的库覆盖原库（或直接安装新库）
+mv quickjs/libquickjs_fixed.a quickjs/libquickjs.a
 install -d "$MINGW_PREFIX/lib/quickjs/"
 install -m644 quickjs/libquickjs.a "$MINGW_PREFIX/lib/quickjs/"
 install -d "$MINGW_PREFIX/include/quickjs"
