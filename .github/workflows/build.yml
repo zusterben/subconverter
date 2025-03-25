@@ -133,12 +133,12 @@ jobs:
           msystem: ${{ matrix.msystem }}
           path-type: inherit
 
-      - name: Downgrade MinGW-w64 (i686)
-        if: matrix.env == 'i686'
-        run: |
-          pacman -Sy --noconfirm
-          pacman -U --noconfirm https://repo.msys2.org/mingw/i686/mingw-w64-i686-gcc-13.2.0-1-any.pkg.tar.zst
-          pacman -U --noconfirm https://repo.msys2.org/mingw/i686/mingw-w64-i686-crt-11.0.0-1-any.pkg.tar.zst
+#      - name: Downgrade MinGW-w64 (i686)
+#        if: matrix.env == 'i686'
+#        run: |
+#          pacman -Sy --noconfirm
+#          pacman -U --noconfirm https://repo.msys2.org/mingw/i686/mingw-w64-i686-gcc-13.2.0-1-any.pkg.tar.zst
+#          pacman -U --noconfirm https://repo.msys2.org/mingw/i686/mingw-w64-i686-crt-11.0.0-1-any.pkg.tar.zst
 
       - name: Check GCC Version
         run: gcc --version
