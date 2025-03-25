@@ -114,17 +114,14 @@ jobs:
     steps:
       - name: Checkout base
         uses: actions/checkout@v4
-
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: '16'
-
       - name: Setup MSYS2
         uses: msys2/setup-msys2@v2
         with:
@@ -132,43 +129,19 @@ jobs:
           install: base-devel git mingw-w64-${{ matrix.env }}-gcc mingw-w64-${{ matrix.env }}-cmake mingw-w64-${{ matrix.env }}-pcre2 patch
           msystem: ${{ matrix.msystem }}
           path-type: inherit
-
-#      - name: Downgrade MinGW-w64 (i686)
-#        if: matrix.env == 'i686'
-#        run: |
-#          pacman -Sy --noconfirm
-#          pacman -U --noconfirm https://repo.msys2.org/mingw/i686/mingw-w64-i686-gcc-13.2.0-1-any.pkg.tar.zst
-#          pacman -U --noconfirm https://repo.msys2.org/mingw/i686/mingw-w64-i686-crt-11.0.0-1-any.pkg.tar.zst
-
-      - name: Check GCC Version
-        run: gcc --version
-
-      - name: Set Compiler Flags
-        run: |
-          echo "CFLAGS=-fcommon -static" >> $GITHUB_ENV
-          echo "CXXFLAGS=-fcommon -static" >> $GITHUB_ENV
-          echo "LDFLAGS=-static -static-libgcc -static-libstdc++" >> $GITHUB_ENV
-
-      - name: Remove pkg-config
-        run: rm -f C:/Strawberry/perl/bin/pkg-config C:/Strawberry/perl/bin/pkg-config.bat /mingw32/bin/pkg-config*
-
       - name: Add commit id into version
         if: ${{ !startsWith(github.ref, 'refs/tags/') }}
         run: SHA=$(git rev-parse --short HEAD) && sed -i 's/\(v[0-9]\.[0-9]\.[0-9]\)/\1-'"$SHA"'/' src/version.h
-
       - name: Build
         run: bash scripts/build.windows.release.sh
-
       - name: Upload
         uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.artifact }}
           path: subconverter/
-
       - name: Package Release
         if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
         run: 7z a ${{ matrix.artifact }}.7z subconverter/
-
       - name: Draft Release
         if: ${{ github.event_name != 'pull_request' && startsWith(github.ref, 'refs/tags/') }}
         uses: softprops/action-gh-release@v2
