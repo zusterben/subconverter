@@ -16,6 +16,11 @@ cd ..
 git clone https://github.com/ftk/quickjspp --depth=1
 cd quickjspp
 patch quickjs/quickjs-libc.c -i ../scripts/patches/0001-quickjs-libc-add-realpath-for-Windows.patch
+# 对 quickjs/quickjs.c 应用自动补丁，添加 weak 属性，避免 mingw 重复定义冲突
+# 这里假设 __mingw_fe_pc53_env、__mingw_fe_pc64_env 和 __mingw_fe_dfl_env 均以 int 开头定义
+sed -i 's/^int __mingw_fe_pc53_env/__attribute__((weak)) int __mingw_fe_pc53_env/' quickjs/quickjs.c
+sed -i 's/^int __mingw_fe_pc64_env/__attribute__((weak)) int __mingw_fe_pc64_env/' quickjs/quickjs.c
+sed -i 's/^int __mingw_fe_dfl_env/__attribute__((weak)) int __mingw_fe_dfl_env/' quickjs/quickjs.c
 cmake -G "Unix Makefiles" -DCMAKE_BUILD_TYPE=Release .
 make quickjs -j4
 install -d "$MINGW_PREFIX/lib/quickjs/"
