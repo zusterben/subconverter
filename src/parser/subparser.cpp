@@ -36,7 +36,7 @@ std::string modSSMD5 = "f7653207090ce3389115e9c88541afe0";
 
 void commonConstruct(Proxy &node, ProxyType type, const std::string &group, const std::string &remarks,
                      const std::string &server, const std::string &port, const tribool &udp, const tribool &tfo,
-                     const tribool &scv, const tribool &tls13) {
+                     const tribool &scv, const tribool &tls13,const std::string& underlying_proxy) {
     node.Type = type;
     node.Group = group;
     node.Remark = remarks;
@@ -46,6 +46,7 @@ void commonConstruct(Proxy &node, ProxyType type, const std::string &group, cons
     node.TCPFastOpen = tfo;
     node.AllowInsecure = scv;
     node.TLS13 = tls13;
+    node.UnderlyingProxy = underlying_proxy;
 }
 
 void vmessConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &add,
@@ -53,8 +54,8 @@ void vmessConstruct(Proxy &node, const std::string &group, const std::string &re
                     const std::string &net, const std::string &cipher, const std::string &path, const std::string &host,
                     const std::string &edge, const std::string &tls, const std::string &sni,
                     const std::vector<std::string> &alpnList, tribool udp, tribool tfo,
-                    tribool scv, tribool tls13) {
-    commonConstruct(node, ProxyType::VMess, group, remarks, add, port, udp, tfo, scv, tls13);
+                    tribool scv, tribool tls13,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::VMess, group, remarks, add, port, udp, tfo, scv, tls13,underlying_proxy);
     node.UserId = id.empty() ? "00000000-0000-0000-0000-000000000000" : id;
     node.AlterId = to_int(aid);
     node.EncryptMethod = cipher;
@@ -76,8 +77,8 @@ void vmessConstruct(Proxy &node, const std::string &group, const std::string &re
 void ssrConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server,
                   const std::string &port, const std::string &protocol, const std::string &method,
                   const std::string &obfs, const std::string &password, const std::string &obfsparam,
-                  const std::string &protoparam, tribool udp, tribool tfo, tribool scv) {
-    commonConstruct(node, ProxyType::ShadowsocksR, group, remarks, server, port, udp, tfo, scv, tribool());
+                  const std::string &protoparam, tribool udp, tribool tfo, tribool scv,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::ShadowsocksR, group, remarks, server, port, udp, tfo, scv, tribool(),underlying_proxy);
     node.Password = password;
     node.EncryptMethod = method;
     node.Protocol = protocol;
@@ -89,8 +90,8 @@ void ssrConstruct(Proxy &node, const std::string &group, const std::string &rema
 void ssConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server,
                  const std::string &port, const std::string &password, const std::string &method,
                  const std::string &plugin, const std::string &pluginopts, tribool udp, tribool tfo, tribool scv,
-                 tribool tls13) {
-    commonConstruct(node, ProxyType::Shadowsocks, group, remarks, server, port, udp, tfo, scv, tls13);
+                 tribool tls13,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::Shadowsocks, group, remarks, server, port, udp, tfo, scv, tls13,underlying_proxy);
     node.Password = password;
     node.EncryptMethod = method;
     node.Plugin = plugin;
@@ -99,17 +100,17 @@ void ssConstruct(Proxy &node, const std::string &group, const std::string &remar
 
 void socksConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server,
                     const std::string &port, const std::string &username, const std::string &password, tribool udp,
-                    tribool tfo, tribool scv) {
-    commonConstruct(node, ProxyType::SOCKS5, group, remarks, server, port, udp, tfo, scv, tribool());
+                    tribool tfo, tribool scv,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::SOCKS5, group, remarks, server, port, udp, tfo, scv, tribool(),underlying_proxy);
     node.Username = username;
     node.Password = password;
 }
 
 void httpConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server,
                    const std::string &port, const std::string &username, const std::string &password, bool tls,
-                   tribool tfo, tribool scv, tribool tls13) {
+                   tribool tfo, tribool scv, tribool tls13,const std::string& underlying_proxy) {
     commonConstruct(node, tls ? ProxyType::HTTPS : ProxyType::HTTP, group, remarks, server, port, tribool(), tfo, scv,
-                    tls13);
+                    tls13,underlying_proxy);
     node.Username = username;
     node.Password = password;
     node.TLSSecure = tls;
@@ -121,8 +122,8 @@ void trojanConstruct(Proxy &node, const std::string &group, const std::string &r
                      const std::vector<std::string> &alpnList,
                      bool tlssecure,
                      tribool udp, tribool tfo,
-                     tribool scv, tribool tls13) {
-    commonConstruct(node, ProxyType::Trojan, group, remarks, server, port, udp, tfo, scv, tls13);
+                     tribool scv, tribool tls13,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::Trojan, group, remarks, server, port, udp, tfo, scv, tls13,underlying_proxy);
     node.Password = password;
     node.Host = host;
     node.TLSSecure = tlssecure;
@@ -135,8 +136,8 @@ void trojanConstruct(Proxy &node, const std::string &group, const std::string &r
 
 void snellConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &server,
                     const std::string &port, const std::string &password, const std::string &obfs,
-                    const std::string &host, uint16_t version, tribool udp, tribool tfo, tribool scv) {
-    commonConstruct(node, ProxyType::Snell, group, remarks, server, port, udp, tfo, scv, tribool());
+                    const std::string &host, uint16_t version, tribool udp, tribool tfo, tribool scv,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::Snell, group, remarks, server, port, udp, tfo, scv, tribool(),underlying_proxy);
     node.Password = password;
     node.OBFS = obfs;
     node.Host = host;
@@ -147,8 +148,8 @@ void wireguardConstruct(Proxy &node, const std::string &group, const std::string
                         const std::string &port, const std::string &selfIp, const std::string &selfIpv6,
                         const std::string &privKey, const std::string &pubKey, const std::string &psk,
                         const string_array &dns, const std::string &mtu, const std::string &keepalive,
-                        const std::string &testUrl, const std::string &clientId, const tribool &udp) {
-    commonConstruct(node, ProxyType::WireGuard, group, remarks, server, port, udp, tribool(), tribool(), tribool());
+                        const std::string &testUrl, const std::string &clientId, const tribool &udp,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::WireGuard, group, remarks, server, port, udp, tribool(), tribool(), tribool(),underlying_proxy);
     node.SelfIP = selfIp;
     node.SelfIPv6 = selfIpv6;
     node.PrivateKey = privKey;
@@ -168,8 +169,8 @@ void hysteriaConstruct(Proxy &node, const std::string &group, const std::string 
                        const std::string &obfsParam, const std::string &insecure, const std::string &ports,
                        const std::string &sni, tribool udp,
                        tribool tfo, tribool scv,
-                       tribool tls13) {
-    commonConstruct(node, ProxyType::Hysteria, group, remarks, add, port, udp, tfo, scv, tls13);
+                       tribool tls13,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::Hysteria, group, remarks, add, port, udp, tfo, scv, tls13,underlying_proxy);
     node.Auth = auth;
     node.Host = (host.empty() && !isIPv4(add) && !isIPv6(add)) ? add.data() : trim(host);
     node.UpMbps = up;
@@ -191,8 +192,8 @@ void vlessConstruct(Proxy &node, const std::string &group, const std::string &re
                     const std::string &pbk, const std::string &sid, const std::string &fp, const std::string &sni,
                     const std::vector<std::string> &alpnList,const std::string &packet_encoding,
                     tribool udp, tribool tfo,
-                    tribool scv, tribool tls13) {
-    commonConstruct(node, ProxyType::VLESS, group, remarks, add, port, udp, tfo, scv, tls13);
+                    tribool scv, tribool tls13,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::VLESS, group, remarks, add, port, udp, tfo, scv, tls13,underlying_proxy);
     node.UserId = id.empty() ? "00000000-0000-0000-0000-000000000000" : id;
     node.AlterId = to_int(aid);
     node.EncryptMethod = cipher;
@@ -231,8 +232,8 @@ void hysteria2Construct(Proxy &node, const std::string &group, const std::string
                         const std::string &obfsParam, const std::string &obfsPassword, const std::string &sni,
                         const std::string &publicKey, const std::string &ports,
                         tribool udp, tribool tfo,
-                        tribool scv) {
-    commonConstruct(node, ProxyType::Hysteria2, group, remarks, add, port, udp, tfo, scv, tribool());
+                        tribool scv,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::Hysteria2, group, remarks, add, port, udp, tfo, scv, tribool(),underlying_proxy);
     node.Password = password;
     node.Host = (host.empty() && !isIPv4(add) && !isIPv6(add)) ? add.data() : trim(host);
     node.UpMbps = up;
@@ -251,8 +252,8 @@ void tuicConstruct(Proxy &node, const std::string &group, const std::string &rem
                    const std::string &sni, const std::string &uuid, const std::string &udpRelayMode,
                    const std::string &token,
                    tribool udp, tribool tfo,
-                   tribool scv, tribool reduceRtt, tribool disableSni, uint16_t request_timeout) {
-    commonConstruct(node, ProxyType::TUIC, group, remarks, add, port, udp, tfo, scv, tribool());
+                   tribool scv, tribool reduceRtt, tribool disableSni, uint16_t request_timeout,const std::string& underlying_proxy) {
+    commonConstruct(node, ProxyType::TUIC, group, remarks, add, port, udp, tfo, scv, tribool(),underlying_proxy);
     node.Password = password;
     node.Alpn = alpn;
     node.ServerName = sni;
@@ -1309,7 +1310,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
                 singleproxy["ipv6"] >>= ipv6;
 
                 wireguardConstruct(node, group, ps, server, port, ip, ipv6, private_key, public_key, password,
-                                   dns_server, mtu, "0", "", "", udp);
+                                   dns_server, mtu, "0", "", "", udp,"");
                 break;
             case "vless"_hash:
                 group = XRAY_DEFAULT_GROUP;
@@ -2160,7 +2161,7 @@ bool explodeSurge(std::string surge, std::vector<Proxy> &nodes) {
                 }
 
                 wireguardConstruct(node, WG_DEFAULT_GROUP, remarks, "", "0", ip, ipv6, private_key, "", "", dns_servers,
-                                   mtu, keepalive, test_url, "", udp);
+                                   mtu, keepalive, test_url, "", udp,"");
                 parsePeers(node, peer);
                 break;
             default:
@@ -2823,7 +2824,7 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
                         password = GetMember(singboxNode, "pre_shared_key");
                         dns_server = {"8.8.8.8"};
                         wireguardConstruct(node, group, ps, server, port, ip, ipv6, private_key, public_key, password,
-                                           dns_server, mtu, "0", "", "", udp);
+                                           dns_server, mtu, "0", "", "", udp,"");
                         break;
                     case "socks"_hash:
                         group = SOCKS_DEFAULT_GROUP;

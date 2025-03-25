@@ -127,10 +127,14 @@ struct Proxy {
     String Flow;
     bool FlowShow = false;
     tribool DisableSni;
+    uint32_t UpSpeed;
+    uint32_t DownSpeed;
+    String SNI;
     tribool ReduceRtt;
     String UdpRelayMode = "native";
     uint16_t RequestTimeout = 15000;
     String token;
+    String UnderlyingProxy;
     std::vector<String> AlpnList;
     String PacketEncoding;
 };
