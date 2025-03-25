@@ -16,10 +16,9 @@ cd ..
 git clone https://github.com/ftk/quickjspp --depth=1
 cd quickjspp
 patch quickjs/quickjs-libc.c -i ../scripts/patches/0001-quickjs-libc-add-realpath-for-Windows.patch
-# 通过 -fno-builtin 禁用内建函数，防止 GCC 插件生成额外的符号（例如 __mingw_fe_pc53_env 等）
 cmake -G "Unix Makefiles" \
       -DCMAKE_BUILD_TYPE=Release \
-      -DCMAKE_C_FLAGS="-fno-builtin" .
+      -DCMAKE_C_FLAGS="-D__MINGW_FENV_DEFINED" .
 make quickjs -j4
 install -d "$MINGW_PREFIX/lib/quickjs/"
 install -m644 quickjs/libquickjs.a "$MINGW_PREFIX/lib/quickjs/"
