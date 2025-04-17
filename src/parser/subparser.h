@@ -111,11 +111,11 @@ void explodeSS(std::string ss, Proxy &node);
 void explodeTrojan(std::string trojan, Proxy &node);
 
 void explodeQuan(const std::string &quan, Proxy &node);
-
+void explodeMierus(std::string mieru, Proxy &node);
 void explodeStdVMess(std::string vmess, Proxy &node);
 
 void explodeStdVless(std::string vless, Proxy &node);
-
+void explodeStdMieru(std::string mieru, Proxy &node);
 void explodeStdHysteria(std::string hysteria, Proxy &node);
 
 void explodeStdHysteria2(std::string hysteria2, Proxy &node);

@@ -201,7 +201,7 @@ void anyTlSConstruct(Proxy &node, const std::string &group, const std::string &r
                      tribool tfo, tribool scv,
                      tribool tls13, const std::string &underlying_proxy, uint16_t idleSessionCheckInterval,
                      uint16_t idleSessionTimeout, uint16_t minIdleSession) {
-    commonConstruct(node, ProxyType::Mieru, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
+    commonConstruct(node, ProxyType::AnyTLS, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
     node.Host = trim(host);
     node.Password = password;
     node.AlpnList = AlpnList;
@@ -219,11 +219,11 @@ void mieruConstruct(Proxy &node, const std::string &group, const std::string &re
                     const std::string &transfer_protocol, tribool udp,
                     tribool tfo, tribool scv,
                     tribool tls13, const std::string &underlying_proxy) {
-    commonConstruct(node, ProxyType::AnyTLS, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
+    commonConstruct(node, ProxyType::Mieru, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
     node.Host = trim(host);
     node.Password = password;
     node.Ports = ports;
-    node.TransferProtocol = transfer_protocol;
+    node.TransferProtocol = transfer_protocol.empty()? "TCP" : trim(transfer_protocol);
     node.Username = username;
     node.Multiplexing = multiplexing.empty() ? "MULTIPLEXING_LOW" : trim(multiplexing);
 }
@@ -950,6 +950,24 @@ void explodeVless(std::string vless, Proxy &node) {
     }
 }
 
+void explodeMierus(std::string mierus, Proxy &node) {
+    if (strFind(mierus, "mierus://")) {
+        if (regMatch(mierus, "mierus://(.*?)@(.*)")) {
+            explodeStdMieru(mierus.substr(9), node);
+        }else {
+            mierus = urlSafeBase64Decode(mierus.substr(9));
+            explodeStdMieru("mierus://" + mierus, node);
+        }
+    }else if(strFind(mierus, "mieru://")) {
+        if (regMatch(mierus, "mierus://(.*?)@(.*)")) {
+            explodeStdMieru(mierus.substr(8), node);
+        }else {
+            mierus = urlSafeBase64Decode(mierus.substr(8));
+            explodeStdMieru("mierus://" + mierus, node);
+        }
+    }
+}
+
 void explodeHysteria(std::string hysteria, Proxy &node) {
     printf("explodeHysteria\n");
     hysteria = regReplace(hysteria, "(hysteria|hy)://", "hysteria://");
@@ -1617,6 +1635,51 @@ void explodeStdHysteria(std::string hysteria, Proxy &node) {
                       obfsParam,
                       insecure, "", sni);
     return;
+}
+
+void explodeStdMieru(std::string mieru, Proxy &node) {
+    std::string username, password, host, port, ports, profile, protocol, multiplexing, mtu, remarks;
+    std::string addition;
+    tribool udp, tfo, scv, tls13;
+
+    // 去除前缀
+    string_size pos;
+
+    // 提取 remarks
+    pos = mieru.rfind("#");
+    if (pos != mieru.npos) {
+        remarks = urlDecode(mieru.substr(pos + 1));
+        mieru.erase(pos);
+    }
+
+    // 提取参数
+    pos = mieru.rfind("?");
+    if (pos != mieru.npos) {
+        addition = mieru.substr(pos + 1);
+        mieru.erase(pos);
+    }
+
+    // 账号密码@host
+    if (regGetMatch(mieru, R"(^(.*?):(.*?)@(.*)$)", 4, 0, &username, &password, &host))
+        return;
+
+    // 提取端口（port=多个情况）
+    port = getUrlArg(addition, "port");
+    if (port.find('-') != std::string::npos) {
+        ports = port;
+    }
+    // 提取协议（多个 protocol）
+    protocol = getUrlArg(addition, "protocol");
+
+    multiplexing = getUrlArg(addition, "multiplexing");
+    mtu = getUrlArg(addition, "mtu");
+
+    if (remarks.empty())
+        remarks = host;
+
+    mieruConstruct(node, "MieruGroup", remarks, port,
+                   password, host, ports, username, multiplexing, protocol,
+                   udp, tfo, scv, tls13, "");
 }
 
 void explodeStdHysteria2(std::string hysteria2, Proxy &node) {
@@ -3088,6 +3151,8 @@ void explode(const std::string &link, Proxy &node) {
         explodeTuic(link, node);
     else if (strFind(link, "hysteria2://") || strFind(link, "hy2://"))
         explodeHysteria2(link, node);
+    else if (strFind(link, "mierus://") || strFind(link, "mieru://"))
+        explodeMierus(link, node);
     else if (isLink(link))
         explodeHTTPSub(link, node);
 }
