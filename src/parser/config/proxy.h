@@ -25,7 +25,8 @@ enum class ProxyType
     Hysteria,
     Hysteria2,
     TUIC,
-    AnyTLS
+    AnyTLS,
+    Mieru
 };
 
 inline String getProxyTypeName(ProxyType type) {
@@ -142,6 +143,7 @@ struct Proxy {
     String UnderlyingProxy;
     std::vector<String> AlpnList;
     String PacketEncoding;
+    String Multiplexing;
 };
 
 #define SS_DEFAULT_GROUP "SSProvider"
@@ -157,4 +159,5 @@ struct Proxy {
 #define HYSTERIA2_DEFAULT_GROUP "Hysteria2Provider"
 #define TUIC_DEFAULT_GROUP "TuicProvider"
 #define ANYTLS_DEFAULT_GROUP "AnyTLSProvider"
+#define MIERU_DEFAULT_GROUP "MieruProvider"
 #endif // PROXY_H_INCLUDED

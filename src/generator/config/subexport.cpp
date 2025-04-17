@@ -573,6 +573,25 @@ proxyToClash(std::vector<Proxy> &nodes, YAML::Node &yamlnode, const ProxyGroupCo
                     }
                 }
                 break;
+            case ProxyType::Mieru:
+                singleproxy["type"] = "mieru";
+                if (!x.Password.empty()) {
+                    singleproxy["password"] = x.Password;
+                }
+                if (!x.Username.empty()) {
+                    singleproxy["username"] = x.Username;
+                }
+                if (!x.Multiplexing.empty()) {
+                    singleproxy["multiplexing"] = x.Multiplexing;
+                }
+                if (!x.TransferProtocol.empty()) {
+                    singleproxy["transport"] = x.TransferProtocol;
+                }
+                if (!x.Ports.empty()) {
+                    singleproxy["port-range"] = x.Ports;
+                    singleproxy.remove("port");
+                }
+                break;
             case ProxyType::VLESS:
                 singleproxy["type"] = "vless";
                 singleproxy["uuid"] = x.UserId;
@@ -2707,6 +2726,29 @@ proxyToSingBox(std::vector<Proxy> &nodes, rapidjson::Document &json,
                 if (!x.ReduceRtt.is_undef()) {
                     proxy.AddMember("zero_rtt_handshake", buildBooleanValue(x.ReduceRtt), allocator);
                 }
+                break;
+            }
+            case ProxyType::AnyTLS: {
+                addSingBoxCommonMembers(proxy, x, "anytls", allocator);
+                proxy.AddMember("password", rapidjson::StringRef(x.Password.c_str()), allocator);
+                rapidjson::Value tls(rapidjson::kObjectType);
+                tls.AddMember("enabled", true, allocator);
+                if (!scv.is_undef()) {
+                    tls.AddMember("insecure", buildBooleanValue(scv), allocator);
+                }
+                if (!x.SNI.empty())
+                    tls.AddMember("server_name", rapidjson::StringRef(x.SNI.c_str()), allocator);
+                if (!x.AlpnList.empty()) {
+                    auto alpns = vectorToJsonArray(x.AlpnList, allocator);
+                    tls.AddMember("alpn", alpns, allocator);
+                }
+                if (!x.Fingerprint.empty()) {
+                    rapidjson::Value utls(rapidjson::kObjectType);
+                    utls.AddMember("enabled", true, allocator);
+                    utls.AddMember("fingerprint", rapidjson::StringRef(x.Fingerprint.c_str()), allocator);
+                    proxy.AddMember("utls", utls, allocator);
+                }
+                proxy.AddMember("tls", tls, allocator);
                 break;
             }
             default:

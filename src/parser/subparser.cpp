@@ -201,7 +201,7 @@ void anyTlSConstruct(Proxy &node, const std::string &group, const std::string &r
                      tribool tfo, tribool scv,
                      tribool tls13, const std::string &underlying_proxy, uint16_t idleSessionCheckInterval,
                      uint16_t idleSessionTimeout, uint16_t minIdleSession) {
-    commonConstruct(node, ProxyType::AnyTLS, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
+    commonConstruct(node, ProxyType::Mieru, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
     node.Host = trim(host);
     node.Password = password;
     node.AlpnList = AlpnList;
@@ -212,6 +212,21 @@ void anyTlSConstruct(Proxy &node, const std::string &group, const std::string &r
     node.MinIdleSession = minIdleSession;
 }
 
+void mieruConstruct(Proxy &node, const std::string &group, const std::string &remarks,
+                    const std::string &port, const std::string &password,
+                    const std::string &host, const std::string &ports,
+                    const std::string &username, const std::string &multiplexing,
+                    const std::string &transfer_protocol, tribool udp,
+                    tribool tfo, tribool scv,
+                    tribool tls13, const std::string &underlying_proxy) {
+    commonConstruct(node, ProxyType::AnyTLS, group, remarks, host, port, udp, tfo, scv, tls13, underlying_proxy);
+    node.Host = trim(host);
+    node.Password = password;
+    node.Ports = ports;
+    node.TransferProtocol = transfer_protocol;
+    node.Username = username;
+    node.Multiplexing = multiplexing.empty() ? "MULTIPLEXING_LOW" : trim(multiplexing);
+}
 
 void vlessConstruct(Proxy &node, const std::string &group, const std::string &remarks, const std::string &add,
                     const std::string &port, const std::string &type, const std::string &id, const std::string &aid,
@@ -1144,7 +1159,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         string_array dns_server;
         std::vector<String> alpns;
         String alpn2;
-        std::string fingerprint;
+        std::string fingerprint, multiplexing, transfer_protocol;
         tribool udp, tfo, scv;
         bool reduceRtt, disableSni; //tuic
         std::vector<std::string> alpnList;
@@ -1480,7 +1495,7 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
                 singleproxy["password"] >>= password;
                 singleproxy["sni"] >>= sni;
 
-                if (!singleproxy["alpn"].IsNull()&& singleproxy["alpn"].size() >= 1) {
+                if (!singleproxy["alpn"].IsNull() && singleproxy["alpn"].size() >= 1) {
                     singleproxy["alpn"][0] >>= alpn;
                     alpns.push_back(alpn);
                     if (singleproxy["alpn"].size() >= 2 && !singleproxy["alpn"][1].IsNull()) {
@@ -1491,7 +1506,24 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
                 singleproxy["client-fingerprint"] >>= fingerprint;
                 anyTlSConstruct(node, ANYTLS_DEFAULT_GROUP, ps, port, password, server, alpns, fingerprint, sni,
                                 udp,
-                                tribool(), scv, tribool(),"",30,30,0);
+                                tribool(), scv, tribool(), "", 30, 30, 0);
+                break;
+            case "mieru"_hash:
+                group = MIERU_DEFAULT_GROUP;
+                singleproxy["password"] >>= password;
+                singleproxy["username"] >>= user;
+                singleproxy["port-range"] >>= ports;
+                if (!singleproxy["multiplexing"].IsNull()) {
+                    singleproxy["multiplexing"] >>= multiplexing;
+                }
+                transfer_protocol = "TCP";
+                if (!singleproxy["transport"].IsNull()) {
+                    singleproxy["transport"] >>= transfer_protocol;
+                }
+                mieruConstruct(node, MIERU_DEFAULT_GROUP, ps, port, password, server, ports, user, multiplexing,
+                               transfer_protocol,
+                               udp,
+                               tribool(), scv, tribool(), "");
                 break;
             default:
                 continue;
@@ -2751,6 +2783,7 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
             std::string auth, up, down, obfsParam, insecure, alpn; //hysteria
             std::string obfsPassword; //hysteria2
             string_array dns_server;
+            std::string fingerprint;
             std::string congestion_control, udp_relay_mode; //quic
             tribool udp, tfo, scv, rrt, disableSni;
             rapidjson::Value singboxNode = outbounds[i].GetObject();
@@ -2798,6 +2831,12 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
                         }
                         if (reality.HasMember("short_id") && reality["short_id"].IsString()) {
                             sid = reality["short_id"].GetString();
+                        }
+                    }
+                    if (tlsObj.HasMember("utls") && tlsObj["utls"].IsObject()) {
+                        if (rapidjson::Value reality = tlsObj["utls"].GetObject();
+                            reality.HasMember("fingerprint") && reality["fingerprint"].IsString()) {
+                            fingerprint = reality["fingerprint"].GetString();
                         }
                     }
                 } else {
@@ -2918,6 +2957,14 @@ void explodeSingbox(rapidjson::Value &outbounds, std::vector<Proxy> &nodes) {
                         hysteriaConstruct(node, group, ps, server, port, type, auth, "", host, up, down, alpn,
                                           obfsParam, insecure, ports, sni,
                                           udp, tfo, scv);
+                        break;
+                    case "anytls"_hash:
+                        group = ANYTLS_DEFAULT_GROUP;
+                        password = GetMember(singboxNode, "password");
+                        anyTlSConstruct(node, ANYTLS_DEFAULT_GROUP, ps, port, password, server, alpnList, fingerprint,
+                                        sni,
+                                        udp,
+                                        tribool(), scv, tribool(), "", 30, 30, 0);
                         break;
                     case "hysteria2"_hash:
                         group = HYSTERIA2_DEFAULT_GROUP;
