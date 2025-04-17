@@ -1187,8 +1187,11 @@ void explodeClash(Node yamlnode, std::vector<Proxy> &nodes) {
         singleproxy["name"] >>= ps;
         singleproxy["server"] >>= server;
         singleproxy["port"] >>= port;
+        singleproxy["port-range"] >>= ports;
+
         if (port.empty() || port == "0")
-            continue;
+            if (ports.empty())
+                continue;
         udp = safe_as<std::string>(singleproxy["udp"]);
         scv = safe_as<std::string>(singleproxy["skip-cert-verify"]);
         switch (hash_(proxytype)) {
