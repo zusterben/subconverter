@@ -2107,13 +2107,13 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf,
         std::string &hostname = x.Hostname, &username = x.Username, &password = x.Password, &method = x.EncryptMethod, &
                 plugin = x.Plugin, &pluginopts = x.PluginOption, &id = x.UserId, &transproto = x.TransferProtocol, &host
                 = x.Host, &path = x.Path, &protocol = x.Protocol, &protoparam = x.ProtocolParam, &obfs = x.OBFS, &
-                obfsparam = x.OBFSParam;
+                obfsparam = x.OBFSParam, flow = x.Flow, pk = x.PublicKey,shortId = x.ShortId,sni = x.ServerName;
         std::string port = std::to_string(x.Port), aid = std::to_string(x.AlterId);
         bool &tlssecure = x.TLSSecure;
 
         tribool scv = ext.skip_cert_verify;
         scv.define(x.AllowInsecure);
-
+        tribool udp = x.UDP.is_undef()?ext.udp.is_undef()?false:ext.udp:x.UDP;
         std::string proxy;
 
         switch (x.Type) {
@@ -2141,6 +2141,22 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf,
                         break;
                     case "ws"_hash:
                         proxy += ",transport=ws,path=" + path + ",host=" + host;
+                        break;
+                    default:
+                        continue;
+                }
+                if (!scv.is_undef())
+                    proxy += ",skip-cert-verify=" + std::string(scv.get() ? "true" : "false");
+                break;
+            case ProxyType::VLESS:
+                if (flow != "xtls-rprx-vision") {
+                    continue;
+                }
+                proxy = "VLESS," + hostname + "," + port + ",\"" + id + "\",flow=" + flow + ",public-key=\""+pk+"\",shortid="+shortId+",udp="+(udp.get() ? "true" : "false")+",over-tls="+(tlssecure ? "true" : "false")+",sni="+sni;
+
+                switch (hash_(transproto)) {
+                    case "tcp"_hash:
+                        proxy += ",transport=tcp";
                         break;
                     default:
                         continue;
