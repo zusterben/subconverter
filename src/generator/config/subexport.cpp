@@ -1250,7 +1250,7 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
                 proxyStr = "hysteria2://" + password + "@" + hostname + ":" + port + (ports.empty() ? "" : "," + ports)
                            + "?insecure=" +
                            (x.AllowInsecure.get() ? "1" : "0");
-                if (!obfsparam.empty) {
+                if (!obfsparam.empty()) {
                     proxyStr += "&obfs=" + obfsparam;
                     if (!obfsPassword.empty()) {
                         proxyStr += "&obfs-password=" + obfsparam;
@@ -2197,7 +2197,7 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf,
 
         tribool scv = ext.skip_cert_verify;
         scv.define(x.AllowInsecure);
-        tribool udp = x.UDP.is_undef() ? ext.udp.is_undef() ? false : ext.udp : x.UDP;
+        tribool udp = x.UDP.is_undef() ? ext.udp.is_undef() ? false : ext.udp.get() : x.UDP.get();
         std::string proxy;
 
         switch (x.Type) {
