@@ -251,6 +251,7 @@ void vlessConstruct(Proxy &node, const std::string &group, const std::string &re
     node.ServerName = sni;
     node.AlpnList = alpnList;
     node.PacketEncoding = packet_encoding;
+    node.TLSStr = tls;
     switch (hash_(net)) {
         case "grpc"_hash:
             node.Host = host;
@@ -258,7 +259,7 @@ void vlessConstruct(Proxy &node, const std::string &group, const std::string &re
             node.GRPCServiceName = path.empty() ? "/" : urlEncode(urlDecode(trim(path)));
             break;
         case "quic"_hash:
-            node.QUICSecure = host;
+            node.Host = host;
             node.QUICSecret = path.empty() ? "/" : trim(path);
             break;
         default:

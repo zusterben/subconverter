@@ -1181,22 +1181,24 @@ std::string proxyToSurge(std::vector<Proxy> &nodes, const std::string &base_conf
 }
 
 std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &ext) {
-    /// types: SS=1 SSR=2 VMess=4 Trojan=8
+    /// types: SS=1 SSR=2 VMess=4 Trojan=8,hysteria2=16,vless=32
     std::string proxyStr, allLinks;
-    bool ss = GETBIT(types, 1), ssr = GETBIT(types, 2), vmess = GETBIT(types, 3), trojan = GETBIT(types, 4);
+    bool ss = GETBIT(types, 1), ssr = GETBIT(types, 2), vmess = GETBIT(types, 3), trojan = GETBIT(types, 4), hysteria2 =
+            GETBIT(types, 5), vless = GETBIT(types, 6);
 
     for (Proxy &x: nodes) {
         std::string remark = x.Remark;
         std::string &hostname = x.Hostname, &sni = x.ServerName, &password = x.Password, &method = x.EncryptMethod, &
                         plugin = x.Plugin, &pluginopts = x.PluginOption, &protocol = x.Protocol, &protoparam = x.
-                        ProtocolParam,
-                &obfs = x.OBFS, &obfsparam = x.OBFSParam, &id = x.UserId, &transproto = x.TransferProtocol, &host = x.
-                        Host, &
-                        path = x.Path, &faketype = x.FakeType;
+                        ProtocolParam, &flow = x.Flow, &pbk = x.PublicKey, &sid = x.ShortId, &fp = x.Fingerprint,
+                &packet_encoding = x.PacketEncoding, &fake_type = x.FakeType, &mode = x.GRPCMode,
+                &obfs = x.OBFS, &obfsparam = x.OBFSParam, &obfsPassword = x.OBFSPassword, &id = x.UserId, &transproto =
+                        x.TransferProtocol, &host = x.
+                        Host, &tls = x.TLSStr, &path = x.Path, &faketype = x.FakeType, &ports = x.Ports;
         bool &tlssecure = x.TLSSecure;
+        std::vector<string> alpns = x.AlpnList;
         std::string port = std::to_string(x.Port);
         std::string aid = std::to_string(x.AlterId);
-
         switch (x.Type) {
             case ProxyType::Shadowsocks:
                 if (ss) {
@@ -1241,6 +1243,88 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
                 proxyStr = "vmess://" + base64Encode(
                                vmessLinkConstruct(remark, hostname, port, faketype, id, aid, transproto, path, host,
                                                   tlssecure ? "tls" : ""));
+                break;
+            case ProxyType::Hysteria2:
+                if (!hysteria2)
+                    continue;
+                proxyStr = "hysteria2://" + password + "@" + hostname + ":" + port + (ports.empty() ? "" : "," + ports)
+                           + "?insecure=" +
+                           (x.AllowInsecure.get() ? "1" : "0");
+                if (!obfsparam.empty) {
+                    proxyStr += "&obfs=" + obfsparam;
+                    if (!obfsPassword.empty()) {
+                        proxyStr += "&obfs-password=" + obfsparam;
+                    }
+                }
+                if (!sni.empty()) {
+                    proxyStr += "&sni=" + sni;
+                }
+                proxyStr += "#" + urlEncode(remark);
+                break;
+            case ProxyType::VLESS:
+                if (!vless)
+                    continue;
+            // tls = getUrlArg(addition, "security");
+            // net = getUrlArg(addition, "type");
+            // flow = getUrlArg(addition, "flow");
+            // pbk = getUrlArg(addition, "pbk");
+            // sid = getUrlArg(addition, "sid");
+            // fp = getUrlArg(addition, "fp");
+            // std::string packet_encoding = getUrlArg(addition, "packet-encoding");
+            // std::string alpn = getUrlArg(addition, "alpn");
+                proxyStr = "vless://" + id.empty()
+                               ? "00000000-0000-0000-0000-000000000000"
+                               : id + "@" + hostname + ":" + port;
+                if (!tls.empty()) {
+                    proxyStr += "&security=" + tls;
+                }
+                if (!flow.empty()) {
+                    proxyStr += "&flow=" + flow;
+                }
+                if (!pbk.empty()) {
+                    proxyStr += "&pbk=" + flow;
+                }
+                if (!sid.empty()) {
+                    proxyStr += "&sid=" + flow;
+                }
+                if (!fp.empty()) {
+                    proxyStr += "&fp=" + flow;
+                }
+                if (!packet_encoding.empty()) {
+                    proxyStr += "&packet-encoding=" + flow;
+                }
+                if (!alpns.empty()) {
+                    proxyStr += "&alpn=" + alpns[0];
+                }
+                if (!sni.empty()) {
+                    proxyStr += "&sni=" + sni;
+                }
+                if (!transproto.empty()) {
+                    proxyStr += "&type=" + transproto;
+                    switch (hash_(transproto)) {
+                        case "tcp"_hash:
+                        case "ws"_hash:
+                        case "h2"_hash:
+                            proxyStr += "&headerType=" + fake_type;
+                            if (!host.empty()) {
+                                proxyStr += "&host=" + host;
+                            }
+                            proxyStr += "&path=" + urlEncode(path.empty() ? "/" : path);
+                            break;
+                        case "grpc"_hash:
+                            proxyStr += "&serviceName=" + path;
+                            proxyStr += "&mode=" + mode;
+                            break;
+                        case "quic"_hash:
+                            proxyStr += "&headerType=" + fake_type;
+                            proxyStr += "&quicSecurity=" + host.empty() ? sni : host;
+                            proxyStr += "&key=" + path;
+                            break;
+                        default:
+                            break;
+                    }
+                }
+                proxyStr += "#" + urlEncode(remark);
                 break;
             case ProxyType::Trojan:
                 if (!trojan)
@@ -2107,13 +2191,13 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf,
         std::string &hostname = x.Hostname, &username = x.Username, &password = x.Password, &method = x.EncryptMethod, &
                 plugin = x.Plugin, &pluginopts = x.PluginOption, &id = x.UserId, &transproto = x.TransferProtocol, &host
                 = x.Host, &path = x.Path, &protocol = x.Protocol, &protoparam = x.ProtocolParam, &obfs = x.OBFS, &
-                obfsparam = x.OBFSParam, flow = x.Flow, pk = x.PublicKey,shortId = x.ShortId,sni = x.ServerName;
+                obfsparam = x.OBFSParam, flow = x.Flow, pk = x.PublicKey, shortId = x.ShortId, sni = x.ServerName;
         std::string port = std::to_string(x.Port), aid = std::to_string(x.AlterId);
         bool &tlssecure = x.TLSSecure;
 
         tribool scv = ext.skip_cert_verify;
         scv.define(x.AllowInsecure);
-        tribool udp = x.UDP.is_undef()?ext.udp.is_undef()?false:ext.udp:x.UDP;
+        tribool udp = x.UDP.is_undef() ? ext.udp.is_undef() ? false : ext.udp : x.UDP;
         std::string proxy;
 
         switch (x.Type) {
@@ -2152,7 +2236,9 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf,
                 if (flow != "xtls-rprx-vision") {
                     continue;
                 }
-                proxy = "VLESS," + hostname + "," + port + ",\"" + id + "\",flow=" + flow + ",public-key=\""+pk+"\",shortid="+shortId+",udp="+(udp.get() ? "true" : "false")+",over-tls="+(tlssecure ? "true" : "false")+",sni="+sni;
+                proxy = "VLESS," + hostname + "," + port + ",\"" + id + "\",flow=" + flow + ",public-key=\"" + pk +
+                        "\",shortid=" + shortId + ",udp=" + (udp.get() ? "true" : "false") + ",over-tls=" + (
+                            tlssecure ? "true" : "false") + ",sni=" + sni;
 
                 switch (hash_(transproto)) {
                     case "tcp"_hash:
