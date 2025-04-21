@@ -2237,7 +2237,7 @@ proxyToLoon(std::vector<Proxy> &nodes, const std::string &base_conf,
                     continue;
                 }
                 proxy = "VLESS," + hostname + "," + port + ",\"" + id + "\",flow=" + flow + ",public-key=\"" + pk +
-                        "\",shortid=" + shortId + ",udp=" + (udp.get() ? "true" : "false") + ",over-tls=" + (
+                        "\",short-id=" + shortId + ",udp=" + (udp.get() ? "true" : "false") + ",over-tls=" + (
                             tlssecure ? "true" : "false") + ",sni=" + sni;
 
                 switch (hash_(transproto)) {
