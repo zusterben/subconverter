@@ -1272,9 +1272,9 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
             // fp = getUrlArg(addition, "fp");
             // std::string packet_encoding = getUrlArg(addition, "packet-encoding");
             // std::string alpn = getUrlArg(addition, "alpn");
-                proxyStr = "vless://" + id.empty()
+                proxyStr = "vless://" + (id.empty()
                                ? "00000000-0000-0000-0000-000000000000"
-                               : id + "@" + hostname + ":" + port;
+                               : id) + "@" + hostname + ":" + port+"?";
                 if (!tls.empty()) {
                     proxyStr += "&security=" + tls;
                 }
@@ -1282,16 +1282,16 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
                     proxyStr += "&flow=" + flow;
                 }
                 if (!pbk.empty()) {
-                    proxyStr += "&pbk=" + flow;
+                    proxyStr += "&pbk=" + pbk;
                 }
                 if (!sid.empty()) {
-                    proxyStr += "&sid=" + flow;
+                    proxyStr += "&sid=" + sid;
                 }
                 if (!fp.empty()) {
-                    proxyStr += "&fp=" + flow;
+                    proxyStr += "&fp=" + fp;
                 }
                 if (!packet_encoding.empty()) {
-                    proxyStr += "&packet-encoding=" + flow;
+                    proxyStr += "&packet-encoding=" + packet_encoding;
                 }
                 if (!alpns.empty()) {
                     proxyStr += "&alpn=" + alpns[0];
@@ -1317,7 +1317,7 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
                             break;
                         case "quic"_hash:
                             proxyStr += "&headerType=" + fake_type;
-                            proxyStr += "&quicSecurity=" + host.empty() ? sni : host;
+                            proxyStr += "&quicSecurity=" + (host.empty() ? sni : host);
                             proxyStr += "&key=" + path;
                             break;
                         default:
@@ -1351,8 +1351,7 @@ std::string proxyToSingle(std::vector<Proxy> &nodes, int types, extra_settings &
 
     if (ext.nodelist)
         return allLinks;
-    else
-        return base64Encode(allLinks);
+    return base64Encode(allLinks);
 }
 
 std::string proxyToSSSub(std::string base_conf, std::vector<Proxy> &nodes, extra_settings &ext) {
