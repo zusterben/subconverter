@@ -478,11 +478,14 @@ struct js_traits<std::variant<Ts...>>
             case JS_TAG_EXCEPTION:
                 break;
 
+#ifdef JS_TAG_BIG_DECIMAL
             case JS_TAG_BIG_DECIMAL:
                 [[fallthrough]];
+#endif
+#ifdef JS_TAG_BIG_FLOAT
             case JS_TAG_BIG_FLOAT:
                 [[fallthrough]];
-
+#endif
             case JS_TAG_FLOAT64:
                 [[fallthrough]];
             default: // more than JS_TAG_FLOAT64 (nan boxing)
